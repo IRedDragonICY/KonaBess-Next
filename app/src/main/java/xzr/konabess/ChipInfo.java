@@ -35,8 +35,7 @@ public class ChipInfo {
                 || type == ChipInfo.type.kalama || type == ChipInfo.type.diwali
                 || type == ChipInfo.type.ukee_singleBin || type == ChipInfo.type.pineapple
                 || type == ChipInfo.type.cliffs_singleBin || type == ChipInfo.type.cliffs_7_singleBin
-                || type == ChipInfo.type.kalama_sg_singleBin || type == ChipInfo.type.sun 
-                || type == ChipInfo.type.canoe || type == ChipInfo.type.tuna)
+                || type == ChipInfo.type.kalama_sg_singleBin || type == ChipInfo.type.sun || type == ChipInfo.type.canoe || type == ChipInfo.type.tuna)
             return 16;
         return 11;
     }
@@ -48,8 +47,7 @@ public class ChipInfo {
                 || type == ChipInfo.type.kalama || type == ChipInfo.type.diwali
                 || type == ChipInfo.type.ukee_singleBin || type == ChipInfo.type.pineapple
                 || type == ChipInfo.type.cliffs_singleBin || type == ChipInfo.type.cliffs_7_singleBin
-                || type == ChipInfo.type.kalama_sg_singleBin || type == ChipInfo.type.sun 
-                || type == ChipInfo.type.canoe || type == ChipInfo.type.tuna;
+                || type == ChipInfo.type.kalama_sg_singleBin || type == ChipInfo.type.sun || type == ChipInfo.type.canoe || type == ChipInfo.type.tuna;
     }
 
     public static boolean checkChipGeneral(type input) {
@@ -211,500 +209,1374 @@ public class ChipInfo {
     }
 
     private static class rpmh_levels_kona {
-        public static final int[] levels = {16, 48, 56, 64, 80, 96, 128, 144, 192, 224, 256, 320,
-                336, 352, 384, 400, 416};
-        public static final String[] level_str = {
-                "RETENTION",
-                "MIN_SVS",
-                "LOW_SVS_D1",
-                "LOW_SVS",
-                "LOW_SVS_L1",
-                "LOW_SVS_L2",
-                "SVS",
-                "SVS_L0",
-                "SVS_L1",
-                "SVS_L2",
-                "NOM",
-                "NOM_L1",
-                "NOM_L2",
-                "NOM_L3",
-                "TURBO",
-                "TURBO_L0",
-                "TURBO_L1"
-        };
+        public static final int[] levels;
+        public static final String[] level_str;
+
+        static {
+            levels = new int[416]; // 416 elements
+            level_str = new String[levels.length];
+
+            for (int i = 0; i < levels.length; i++) {
+                levels[i] = i + 1; // Start from 1
+                level_str[i] = String.valueOf(levels[i]);
+                switch (i) {
+                    case 15:
+                        level_str[i] = "16 - RETENTION";
+                        break;
+                    case 47:
+                        level_str[i] = "48 - MIN_SVS";
+                        break;
+                    case 55:
+                        level_str[i] = "56 - LOW_SVS_D1";
+                        break;
+                    case 63:
+                        level_str[i] = "64 - LOW_SVS";
+                        break;
+                    case 79:
+                        level_str[i] = "80 - LOW_SVS_L1";
+                        break;
+                    case 95:
+                        level_str[i] = "96 - LOW_SVS_L2";
+                        break;
+                    case 127:
+                        level_str[i] = "128 - SVS";
+                        break;
+                    case 143:
+                        level_str[i] = "144 - SVS_L0";
+                        break;
+                    case 191:
+                        level_str[i] = "192 - SVS_L1";
+                        break;
+                    case 223:
+                        level_str[i] = "224 - SVS_L2";
+                        break;
+                    case 255:
+                        level_str[i] = "256 - NOM";
+                        break;
+                    case 319:
+                        level_str[i] = "320 - NOM_L1";
+                        break;
+                    case 335:
+                        level_str[i] = "336 - NOM_L2";
+                        break;
+                    case 351:
+                        level_str[i] = "352 - NOM_L3";
+                        break;
+                    case 383:
+                        level_str[i] = "384 - TURBO";
+                        break;
+                    case 399:
+                        level_str[i] = "400 - TURBO_L0";
+                        break;
+                    case 415:
+                        level_str[i] = "416 - TURBO_L1";
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
     }
 
     private static class rpmh_levels_msmnile {
         private static final int RPMH_REGULATOR_LEVEL_OFFSET = 1;
-        public static final int[] levels = {
-                16 + RPMH_REGULATOR_LEVEL_OFFSET,
-                48 + RPMH_REGULATOR_LEVEL_OFFSET,
-                56 + RPMH_REGULATOR_LEVEL_OFFSET,
-                64 + RPMH_REGULATOR_LEVEL_OFFSET,
-                80 + RPMH_REGULATOR_LEVEL_OFFSET,
-                96 + RPMH_REGULATOR_LEVEL_OFFSET,
-                128 + RPMH_REGULATOR_LEVEL_OFFSET,
-                144 + RPMH_REGULATOR_LEVEL_OFFSET,
-                192 + RPMH_REGULATOR_LEVEL_OFFSET,
-                224 + RPMH_REGULATOR_LEVEL_OFFSET,
-                256 + RPMH_REGULATOR_LEVEL_OFFSET,
-                320 + RPMH_REGULATOR_LEVEL_OFFSET,
-                336 + RPMH_REGULATOR_LEVEL_OFFSET,
-                352 + RPMH_REGULATOR_LEVEL_OFFSET,
-                384 + RPMH_REGULATOR_LEVEL_OFFSET,
-                400 + RPMH_REGULATOR_LEVEL_OFFSET,
-                416 + RPMH_REGULATOR_LEVEL_OFFSET
-        };
-        public static final String[] level_str = {
-                "RETENTION",
-                "MIN_SVS",
-                "LOW_SVS_D1",
-                "LOW_SVS",
-                "LOW_SVS_L1",
-                "LOW_SVS_L2",
-                "SVS",
-                "SVS_L0",
-                "SVS_L1",
-                "SVS_L2",
-                "NOM",
-                "NOM_L1",
-                "NOM_L2",
-                "NOM_L3",
-                "TURBO",
-                "TURBO_L0",
-                "TURBO_L1"
-        };
+        public static final int[] levels;
+        public static final String[] level_str;
+
+        static {
+            levels = new int[416];
+            level_str = new String[levels.length];
+
+            for (int i = 0; i < levels.length; i++) {
+                levels[i] = i + RPMH_REGULATOR_LEVEL_OFFSET;
+                level_str[i] = String.valueOf(levels[i]);
+            }
+        }
     }
 
     private static class rpmh_levels_lahaina {
-        public static final int[] levels = {16, 48, 56, 64, 80, 96, 128, 144, 192, 224, 256, 320,
-                336, 352, 384, 400, 416, 432, 448, 464};
-        public static final String[] level_str = {
-                "RETENTION",
-                "MIN_SVS",
-                "LOW_SVS_D1",
-                "LOW_SVS",
-                "LOW_SVS_L1",
-                "LOW_SVS_L2",
-                "SVS",
-                "SVS_L0",
-                "SVS_L1",
-                "SVS_L2",
-                "NOM",
-                "NOM_L1",
-                "NOM_L2",
-                "NOM_L3",
-                "TURBO",
-                "TURBO_L0",
-                "TURBO_L1",
-                "TURBO_L2",
-                "SUPER_TURBO",
-                "SUPER_TURBO_NO_CPR"
-        };
+        public static final int[] levels;
+        public static final String[] level_str;
+
+        static {
+            levels = new int[464]; // 464 elements
+            level_str = new String[levels.length];
+
+            for (int i = 0; i < levels.length; i++) {
+                levels[i] = i + 1; // Start from 1
+                level_str[i] = String.valueOf(levels[i]);
+                switch (i) {
+                    case 15:
+                        level_str[i] = "16 - RETENTION";
+                        break;
+                    case 47:
+                        level_str[i] = "48 - MIN_SVS";
+                        break;
+                    case 55:
+                        level_str[i] = "56 - LOW_SVS_D1";
+                        break;
+                    case 63:
+                        level_str[i] = "64 - LOW_SVS";
+                        break;
+                    case 79:
+                        level_str[i] = "80 - LOW_SVS_L1";
+                        break;
+                    case 95:
+                        level_str[i] = "96 - LOW_SVS_L2";
+                        break;
+                    case 127:
+                        level_str[i] = "128 - SVS";
+                        break;
+                    case 143:
+                        level_str[i] = "144 - SVS_L0";
+                        break;
+                    case 191:
+                        level_str[i] = "192 - SVS_L1";
+                        break;
+                    case 223:
+                        level_str[i] = "224 - SVS_L2";
+                        break;
+                    case 255:
+                        level_str[i] = "256 - NOM";
+                        break;
+                    case 319:
+                        level_str[i] = "320 - NOM_L1";
+                        break;
+                    case 335:
+                        level_str[i] = "336 - NOM_L2";
+                        break;
+                    case 351:
+                        level_str[i] = "352 - NOM_L3";
+                        break;
+                    case 383:
+                        level_str[i] = "384 - TURBO";
+                        break;
+                    case 399:
+                        level_str[i] = "400 - TURBO_L0";
+                        break;
+                    case 415:
+                        level_str[i] = "416 - TURBO_L1";
+                        break;
+                    case 431:
+                        level_str[i] = "432 - TURBO_L2";
+                        break;
+                    case 447:
+                        level_str[i] = "448 - SUPER_TURBO";
+                        break;
+                    case 463:
+                        level_str[i] = "464 - SUPER_TURBO_NO_CPR";
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
     }
 
     private static class rpmh_levels_lahaina_singleBin {
-        public static final int[] levels = {16, 48, 56, 64, 80, 96, 128, 144, 192, 224, 256, 320,
-                336, 352, 384, 400, 416};
-        public static final String[] level_str = {
-                "RETENTION",
-                "MIN_SVS",
-                "LOW_SVS_D1",
-                "LOW_SVS",
-                "LOW_SVS_L1",
-                "LOW_SVS_L2",
-                "SVS",
-                "SVS_L0",
-                "SVS_L1",
-                "SVS_L2",
-                "NOM",
-                "NOM_L1",
-                "NOM_L2",
-                "NOM_L3",
-                "TURBO",
-                "TURBO_L0",
-                "TURBO_L1"
-        };
+        public static final int[] levels;
+        public static final String[] level_str;
+
+        static {
+            levels = new int[416]; // 416 elements
+            level_str = new String[levels.length];
+
+            for (int i = 0; i < levels.length; i++) {
+                levels[i] = i + 1; // Start from 1
+                level_str[i] = String.valueOf(levels[i]);
+                switch (i) {
+                    case 15:
+                        level_str[i] = "16 - RETENTION";
+                        break;
+                    case 47:
+                        level_str[i] = "48 - MIN_SVS";
+                        break;
+                    case 55:
+                        level_str[i] = "56 - LOW_SVS_D1";
+                        break;
+                    case 63:
+                        level_str[i] = "64 - LOW_SVS";
+                        break;
+                    case 79:
+                        level_str[i] = "80 - LOW_SVS_L1";
+                        break;
+                    case 95:
+                        level_str[i] = "96 - LOW_SVS_L2";
+                        break;
+                    case 127:
+                        level_str[i] = "128 - SVS";
+                        break;
+                    case 143:
+                        level_str[i] = "144 - SVS_L0";
+                        break;
+                    case 191:
+                        level_str[i] = "192 - SVS_L1";
+                        break;
+                    case 223:
+                        level_str[i] = "224 - SVS_L2";
+                        break;
+                    case 255:
+                        level_str[i] = "256 - NOM";
+                        break;
+                    case 319:
+                        level_str[i] = "320 - NOM_L1";
+                        break;
+                    case 335:
+                        level_str[i] = "336 - NOM_L2";
+                        break;
+                    case 351:
+                        level_str[i] = "352 - NOM_L3";
+                        break;
+                    case 383:
+                        level_str[i] = "384 - TURBO";
+                        break;
+                    case 399:
+                        level_str[i] = "400 - TURBO_L0";
+                        break;
+                    case 415:
+                        level_str[i] = "416 - TURBO_L1";
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
     }
 
     private static class rpmh_levels_lito {
-        public static final int[] levels = {16, 48, 56, 64, 80, 96, 128, 144, 192, 224, 256, 320,
-                336, 352, 384, 400, 416};
-        public static final String[] level_str = {
-                "RETENTION",
-                "MIN_SVS",
-                "LOW_SVS_D1",
-                "LOW_SVS",
-                "LOW_SVS_L1",
-                "LOW_SVS_L2",
-                "SVS",
-                "SVS_L0",
-                "SVS_L1",
-                "SVS_L2",
-                "NOM",
-                "NOM_L1",
-                "NOM_L2",
-                "NOM_L3",
-                "TURBO",
-                "TURBO_L0",
-                "TURBO_L1"
-        };
+        public static final int[] levels;
+        public static final String[] level_str;
+
+        static {
+            levels = new int[416]; // 416 elements
+            level_str = new String[levels.length];
+
+            for (int i = 0; i < levels.length; i++) {
+                levels[i] = i + 1; // Start from 1
+                level_str[i] = String.valueOf(levels[i]);
+                switch (i) {
+                    case 15:
+                        level_str[i] = "16 - RETENTION";
+                        break;
+                    case 47:
+                        level_str[i] = "48 - MIN_SVS";
+                        break;
+                    case 55:
+                        level_str[i] = "56 - LOW_SVS_D1";
+                        break;
+                    case 63:
+                        level_str[i] = "64 - LOW_SVS";
+                        break;
+                    case 79:
+                        level_str[i] = "80 - LOW_SVS_L1";
+                        break;
+                    case 95:
+                        level_str[i] = "96 - LOW_SVS_L2";
+                        break;
+                    case 127:
+                        level_str[i] = "128 - SVS";
+                        break;
+                    case 143:
+                        level_str[i] = "144 - SVS_L0";
+                        break;
+                    case 191:
+                        level_str[i] = "192 - SVS_L1";
+                        break;
+                    case 223:
+                        level_str[i] = "224 - SVS_L2";
+                        break;
+                    case 255:
+                        level_str[i] = "256 - NOM";
+                        break;
+                    case 319:
+                        level_str[i] = "320 - NOM_L1";
+                        break;
+                    case 335:
+                        level_str[i] = "336 - NOM_L2";
+                        break;
+                    case 351:
+                        level_str[i] = "352 - NOM_L3";
+                        break;
+                    case 383:
+                        level_str[i] = "384 - TURBO";
+                        break;
+                    case 399:
+                        level_str[i] = "400 - TURBO_L0";
+                        break;
+                    case 415:
+                        level_str[i] = "416 - TURBO_L1";
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
     }
 
     private static class rpmh_levels_lagoon {
-        public static final int[] levels = {16, 48, 56, 64, 80, 96, 128, 144, 192, 224, 256, 320,
-                336, 352, 384, 400, 416};
-        public static final String[] level_str = {
-                "RETENTION",
-                "MIN_SVS",
-                "LOW_SVS_D1",
-                "LOW_SVS",
-                "LOW_SVS_L1",
-                "LOW_SVS_L2",
-                "SVS",
-                "SVS_L0",
-                "SVS_L1",
-                "SVS_L2",
-                "NOM",
-                "NOM_L1",
-                "NOM_L2",
-                "NOM_L3",
-                "TURBO",
-                "TURBO_L0",
-                "TURBO_L1"
-        };
+        public static final int[] levels;
+        public static final String[] level_str;
+
+        static {
+            levels = new int[416]; // 416 elements
+            level_str = new String[levels.length];
+
+            for (int i = 0; i < levels.length; i++) {
+                levels[i] = i + 1; // Start from 1
+                level_str[i] = String.valueOf(levels[i]);
+                switch (i) {
+                    case 15:
+                        level_str[i] = "16 - RETENTION";
+                        break;
+                    case 47:
+                        level_str[i] = "48 - MIN_SVS";
+                        break;
+                    case 55:
+                        level_str[i] = "56 - LOW_SVS_D1";
+                        break;
+                    case 63:
+                        level_str[i] = "64 - LOW_SVS";
+                        break;
+                    case 79:
+                        level_str[i] = "80 - LOW_SVS_L1";
+                        break;
+                    case 95:
+                        level_str[i] = "96 - LOW_SVS_L2";
+                        break;
+                    case 127:
+                        level_str[i] = "128 - SVS";
+                        break;
+                    case 143:
+                        level_str[i] = "144 - SVS_L0";
+                        break;
+                    case 191:
+                        level_str[i] = "192 - SVS_L1";
+                        break;
+                    case 223:
+                        level_str[i] = "224 - SVS_L2";
+                        break;
+                    case 255:
+                        level_str[i] = "256 - NOM";
+                        break;
+                    case 319:
+                        level_str[i] = "320 - NOM_L1";
+                        break;
+                    case 335:
+                        level_str[i] = "336 - NOM_L2";
+                        break;
+                    case 351:
+                        level_str[i] = "352 - NOM_L3";
+                        break;
+                    case 383:
+                        level_str[i] = "384 - TURBO";
+                        break;
+                    case 399:
+                        level_str[i] = "400 - TURBO_L0";
+                        break;
+                    case 415:
+                        level_str[i] = "416 - TURBO_L1";
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
     }
 
     private static class rpmh_levels_shima {
-        public static final int[] levels = {16, 48, 56, 64, 80, 96, 128, 144, 192, 224, 256, 320,
-                336, 352, 384, 400, 416};
-        public static final String[] level_str = {
-                "RETENTION",
-                "MIN_SVS",
-                "LOW_SVS_D1",
-                "LOW_SVS",
-                "LOW_SVS_L1",
-                "LOW_SVS_L2",
-                "SVS",
-                "SVS_L0",
-                "SVS_L1",
-                "SVS_L2",
-                "NOM",
-                "NOM_L1",
-                "NOM_L2",
-                "NOM_L3",
-                "TURBO",
-                "TURBO_L0",
-                "TURBO_L1"
-        };
+        public static final int[] levels;
+        public static final String[] level_str;
+
+        static {
+            levels = new int[416]; // 416 elements
+            level_str = new String[levels.length];
+
+            for (int i = 0; i < levels.length; i++) {
+                levels[i] = i + 1; // Start from 1
+                level_str[i] = String.valueOf(levels[i]);
+                switch (i) {
+                    case 15:
+                        level_str[i] = "16 - RETENTION";
+                        break;
+                    case 47:
+                        level_str[i] = "48 - MIN_SVS";
+                        break;
+                    case 55:
+                        level_str[i] = "56 - LOW_SVS_D1";
+                        break;
+                    case 63:
+                        level_str[i] = "64 - LOW_SVS";
+                        break;
+                    case 79:
+                        level_str[i] = "80 - LOW_SVS_L1";
+                        break;
+                    case 95:
+                        level_str[i] = "96 - LOW_SVS_L2";
+                        break;
+                    case 127:
+                        level_str[i] = "128 - SVS";
+                        break;
+                    case 143:
+                        level_str[i] = "144 - SVS_L0";
+                        break;
+                    case 191:
+                        level_str[i] = "192 - SVS_L1";
+                        break;
+                    case 223:
+                        level_str[i] = "224 - SVS_L2";
+                        break;
+                    case 255:
+                        level_str[i] = "256 - NOM";
+                        break;
+                    case 319:
+                        level_str[i] = "320 - NOM_L1";
+                        break;
+                    case 335:
+                        level_str[i] = "336 - NOM_L2";
+                        break;
+                    case 351:
+                        level_str[i] = "352 - NOM_L3";
+                        break;
+                    case 383:
+                        level_str[i] = "384 - TURBO";
+                        break;
+                    case 399:
+                        level_str[i] = "400 - TURBO_L0";
+                        break;
+                    case 415:
+                        level_str[i] = "416 - TURBO_L1";
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
     }
 
     private static class rpmh_levels_yupik {
-        public static final int[] levels = {16, 48, 56, 64, 80, 96, 128, 144, 192, 224, 256, 320,
-                336, 352, 384, 400, 416};
-        public static final String[] level_str = {
-                "RETENTION",
-                "MIN_SVS",
-                "LOW_SVS_D1",
-                "LOW_SVS",
-                "LOW_SVS_L1",
-                "LOW_SVS_L2",
-                "SVS",
-                "SVS_L0",
-                "SVS_L1",
-                "SVS_L2",
-                "NOM",
-                "NOM_L1",
-                "NOM_L2",
-                "NOM_L3",
-                "TURBO",
-                "TURBO_L0",
-                "TURBO_L1"
-        };
+        public static final int[] levels;
+        public static final String[] level_str;
+
+        static {
+            levels = new int[416]; // 416 elements
+            level_str = new String[levels.length];
+
+            for (int i = 0; i < levels.length; i++) {
+                levels[i] = i + 1; // Start from 1
+                level_str[i] = String.valueOf(levels[i]);
+                switch (i) {
+                    case 15:
+                        level_str[i] = "16 - RETENTION";
+                        break;
+                    case 47:
+                        level_str[i] = "48 - MIN_SVS";
+                        break;
+                    case 55:
+                        level_str[i] = "56 - LOW_SVS_D1";
+                        break;
+                    case 63:
+                        level_str[i] = "64 - LOW_SVS";
+                        break;
+                    case 79:
+                        level_str[i] = "80 - LOW_SVS_L1";
+                        break;
+                    case 95:
+                        level_str[i] = "96 - LOW_SVS_L2";
+                        break;
+                    case 127:
+                        level_str[i] = "128 - SVS";
+                        break;
+                    case 143:
+                        level_str[i] = "144 - SVS_L0";
+                        break;
+                    case 191:
+                        level_str[i] = "192 - SVS_L1";
+                        break;
+                    case 223:
+                        level_str[i] = "224 - SVS_L2";
+                        break;
+                    case 255:
+                        level_str[i] = "256 - NOM";
+                        break;
+                    case 319:
+                        level_str[i] = "320 - NOM_L1";
+                        break;
+                    case 335:
+                        level_str[i] = "336 - NOM_L2";
+                        break;
+                    case 351:
+                        level_str[i] = "352 - NOM_L3";
+                        break;
+                    case 383:
+                        level_str[i] = "384 - TURBO";
+                        break;
+                    case 399:
+                        level_str[i] = "400 - TURBO_L0";
+                        break;
+                    case 415:
+                        level_str[i] = "416 - TURBO_L1";
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
     }
 
     private static class rpmh_levels_waipio {
-        public static final int[] levels = {16, 48, 56, 64, 80, 96, 128, 144, 192, 224, 256, 320,
-                336, 352, 384, 400, 416};
-        public static final String[] level_str = {
-                "RETENTION",
-                "MIN_SVS",
-                "LOW_SVS_D1",
-                "LOW_SVS",
-                "LOW_SVS_L1",
-                "LOW_SVS_L2",
-                "SVS",
-                "SVS_L0",
-                "SVS_L1",
-                "SVS_L2",
-                "NOM",
-                "NOM_L1",
-                "NOM_L2",
-                "NOM_L3",
-                "TURBO",
-                "TURBO_L0",
-                "TURBO_L1"
-        };
+        public static final int[] levels;
+        public static final String[] level_str;
+
+        static {
+            levels = new int[416]; // 416 elements
+            level_str = new String[levels.length];
+
+            for (int i = 0; i < levels.length; i++) {
+                levels[i] = i + 1; // Start from 1
+                level_str[i] = String.valueOf(levels[i]);
+                switch (i) {
+                    case 15:
+                        level_str[i] = "16 - RETENTION";
+                        break;
+                    case 47:
+                        level_str[i] = "48 - MIN_SVS";
+                        break;
+                    case 55:
+                        level_str[i] = "56 - LOW_SVS_D1";
+                        break;
+                    case 63:
+                        level_str[i] = "64 - LOW_SVS";
+                        break;
+                    case 79:
+                        level_str[i] = "80 - LOW_SVS_L1";
+                        break;
+                    case 95:
+                        level_str[i] = "96 - LOW_SVS_L2";
+                        break;
+                    case 127:
+                        level_str[i] = "128 - SVS";
+                        break;
+                    case 143:
+                        level_str[i] = "144 - SVS_L0";
+                        break;
+                    case 191:
+                        level_str[i] = "192 - SVS_L1";
+                        break;
+                    case 223:
+                        level_str[i] = "224 - SVS_L2";
+                        break;
+                    case 255:
+                        level_str[i] = "256 - NOM";
+                        break;
+                    case 319:
+                        level_str[i] = "320 - NOM_L1";
+                        break;
+                    case 335:
+                        level_str[i] = "336 - NOM_L2";
+                        break;
+                    case 351:
+                        level_str[i] = "352 - NOM_L3";
+                        break;
+                    case 383:
+                        level_str[i] = "384 - TURBO";
+                        break;
+                    case 399:
+                        level_str[i] = "400 - TURBO_L0";
+                        break;
+                    case 415:
+                        level_str[i] = "416 - TURBO_L1";
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
     }
 
     private static class rpmh_levels_cape {
-        public static final int[] levels = {16, 48, 56, 64, 80, 96, 128, 144, 192, 224, 256, 320,
-                336, 352, 384, 400, 416};
-        public static final String[] level_str = {
-                "RETENTION",
-                "MIN_SVS",
-                "LOW_SVS_D1",
-                "LOW_SVS",
-                "LOW_SVS_L1",
-                "LOW_SVS_L2",
-                "SVS",
-                "SVS_L0",
-                "SVS_L1",
-                "SVS_L2",
-                "NOM",
-                "NOM_L1",
-                "NOM_L2",
-                "NOM_L3",
-                "TURBO",
-                "TURBO_L0",
-                "TURBO_L1"
-        };
+        public static final int[] levels;
+        public static final String[] level_str;
+
+        static {
+            levels = new int[416]; // 416 elements
+            level_str = new String[levels.length];
+
+            for (int i = 0; i < levels.length; i++) {
+                levels[i] = i + 1; // Start from 1
+                level_str[i] = String.valueOf(levels[i]);
+                switch (i) {
+                    case 15:
+                        level_str[i] = "16 - RETENTION";
+                        break;
+                    case 47:
+                        level_str[i] = "48 - MIN_SVS";
+                        break;
+                    case 55:
+                        level_str[i] = "56 - LOW_SVS_D1";
+                        break;
+                    case 63:
+                        level_str[i] = "64 - LOW_SVS";
+                        break;
+                    case 79:
+                        level_str[i] = "80 - LOW_SVS_L1";
+                        break;
+                    case 95:
+                        level_str[i] = "96 - LOW_SVS_L2";
+                        break;
+                    case 127:
+                        level_str[i] = "128 - SVS";
+                        break;
+                    case 143:
+                        level_str[i] = "144 - SVS_L0";
+                        break;
+                    case 191:
+                        level_str[i] = "192 - SVS_L1";
+                        break;
+                    case 223:
+                        level_str[i] = "224 - SVS_L2";
+                        break;
+                    case 255:
+                        level_str[i] = "256 - NOM";
+                        break;
+                    case 319:
+                        level_str[i] = "320 - NOM_L1";
+                        break;
+                    case 335:
+                        level_str[i] = "336 - NOM_L2";
+                        break;
+                    case 351:
+                        level_str[i] = "352 - NOM_L3";
+                        break;
+                    case 383:
+                        level_str[i] = "384 - TURBO";
+                        break;
+                    case 399:
+                        level_str[i] = "400 - TURBO_L0";
+                        break;
+                    case 415:
+                        level_str[i] = "416 - TURBO_L1";
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
     }
 
     private static class rpmh_levels_diwali {
-        public static final int[] levels = {16, 48, 56, 64, 80, 96, 128, 144, 192, 224, 256, 320,
-                336, 352, 384, 400, 416};
-        public static final String[] level_str = {
-                "RETENTION",
-                "MIN_SVS",
-                "LOW_SVS_D1",
-                "LOW_SVS",
-                "LOW_SVS_L1",
-                "LOW_SVS_L2",
-                "SVS",
-                "SVS_L0",
-                "SVS_L1",
-                "SVS_L2",
-                "NOM",
-                "NOM_L1",
-                "NOM_L2",
-                "NOM_L3",
-                "TURBO",
-                "TURBO_L0",
-                "TURBO_L1"
-        };
+        public static final int[] levels;
+        public static final String[] level_str;
+
+        static {
+            levels = new int[416]; // 416 elements
+            level_str = new String[levels.length];
+
+            for (int i = 0; i < levels.length; i++) {
+                levels[i] = i + 1; // Start from 1
+                level_str[i] = String.valueOf(levels[i]);
+                switch (i) {
+                    case 15:
+                        level_str[i] = "16 - RETENTION";
+                        break;
+                    case 47:
+                        level_str[i] = "48 - MIN_SVS";
+                        break;
+                    case 55:
+                        level_str[i] = "56 - LOW_SVS_D1";
+                        break;
+                    case 63:
+                        level_str[i] = "64 - LOW_SVS";
+                        break;
+                    case 79:
+                        level_str[i] = "80 - LOW_SVS_L1";
+                        break;
+                    case 95:
+                        level_str[i] = "96 - LOW_SVS_L2";
+                        break;
+                    case 127:
+                        level_str[i] = "128 - SVS";
+                        break;
+                    case 143:
+                        level_str[i] = "144 - SVS_L0";
+                        break;
+                    case 191:
+                        level_str[i] = "192 - SVS_L1";
+                        break;
+                    case 223:
+                        level_str[i] = "224 - SVS_L2";
+                        break;
+                    case 255:
+                        level_str[i] = "256 - NOM";
+                        break;
+                    case 319:
+                        level_str[i] = "320 - NOM_L1";
+                        break;
+                    case 335:
+                        level_str[i] = "336 - NOM_L2";
+                        break;
+                    case 351:
+                        level_str[i] = "352 - NOM_L3";
+                        break;
+                    case 383:
+                        level_str[i] = "384 - TURBO";
+                        break;
+                    case 399:
+                        level_str[i] = "400 - TURBO_L0";
+                        break;
+                    case 415:
+                        level_str[i] = "416 - TURBO_L1";
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
     }
 
     private static class rpmh_levels_ukee {
-        public static final int[] levels = {16, 48, 56, 64, 80, 96, 128, 144, 192, 224, 256, 320,
-                336, 352, 384, 400, 416};
-        public static final String[] level_str = {
-                "RETENTION",
-                "MIN_SVS",
-                "LOW_SVS_D1",
-                "LOW_SVS",
-                "LOW_SVS_L1",
-                "LOW_SVS_L2",
-                "SVS",
-                "SVS_L0",
-                "SVS_L1",
-                "SVS_L2",
-                "NOM",
-                "NOM_L1",
-                "NOM_L2",
-                "NOM_L3",
-                "TURBO",
-                "TURBO_L0",
-                "TURBO_L1"
-        };
+        public static final int[] levels;
+        public static final String[] level_str;
+
+        static {
+            levels = new int[416]; // 416 elements
+            level_str = new String[levels.length];
+
+            for (int i = 0; i < levels.length; i++) {
+                levels[i] = i + 1; // Start from 1
+                level_str[i] = String.valueOf(levels[i]);
+                switch (i) {
+                    case 15:
+                        level_str[i] = "16 - RETENTION";
+                        break;
+                    case 47:
+                        level_str[i] = "48 - MIN_SVS";
+                        break;
+                    case 55:
+                        level_str[i] = "56 - LOW_SVS_D1";
+                        break;
+                    case 63:
+                        level_str[i] = "64 - LOW_SVS";
+                        break;
+                    case 79:
+                        level_str[i] = "80 - LOW_SVS_L1";
+                        break;
+                    case 95:
+                        level_str[i] = "96 - LOW_SVS_L2";
+                        break;
+                    case 127:
+                        level_str[i] = "128 - SVS";
+                        break;
+                    case 143:
+                        level_str[i] = "144 - SVS_L0";
+                        break;
+                    case 191:
+                        level_str[i] = "192 - SVS_L1";
+                        break;
+                    case 223:
+                        level_str[i] = "224 - SVS_L2";
+                        break;
+                    case 255:
+                        level_str[i] = "256 - NOM";
+                        break;
+                    case 319:
+                        level_str[i] = "320 - NOM_L1";
+                        break;
+                    case 335:
+                        level_str[i] = "336 - NOM_L2";
+                        break;
+                    case 351:
+                        level_str[i] = "352 - NOM_L3";
+                        break;
+                    case 383:
+                        level_str[i] = "384 - TURBO";
+                        break;
+                    case 399:
+                        level_str[i] = "400 - TURBO_L0";
+                        break;
+                    case 415:
+                        level_str[i] = "416 - TURBO_L1";
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
     }
 
     private static class rpmh_levels_kalama {
-        public static final int[] levels = {16, 48, 52, 56, 60, 64, 72, 80, 96, 128, 144, 192,
-                224, 256, 288, 320, 336, 384, 400, 416, 432, 448, 464, 480};
-        public static final String[] level_str = {
-                "RETENTION",
-                "MIN_SVS",
-                "LOW_SVS_D2",
-                "LOW_SVS_D1",
-                "LOW_SVS_D0",
-                "LOW_SVS",
-                "LOW_SVS_P1",
-                "LOW_SVS_L1",
-                "LOW_SVS_L2",
-                "SVS",
-                "SVS_L0",
-                "SVS_L1",
-                "SVS_L2",
-                "NOM",
-                "NOM_L0",
-                "NOM_L1",
-                "NOM_L2",
-                "TURBO",
-                "TURBO_L0",
-                "TURBO_L1",
-                "TURBO_L2",
-                "TURBO_L3",
-                "SUPER_TURBO",
-                "SUPER_TURBO_NO_CPR"
-        };
+        public static final int[] levels;
+        public static final String[] level_str;
+
+        static {
+            levels = new int[480]; // 480 elements
+            level_str = new String[levels.length];
+
+            for (int i = 0; i < levels.length; i++) {
+                levels[i] = i + 1; // Start from 1
+                level_str[i] = String.valueOf(levels[i]);
+                switch (i) {
+                    case 15:
+                        level_str[i] = "16 - RETENTION";
+                        break;
+                    case 47:
+                        level_str[i] = "48 - MIN_SVS";
+                        break;
+                    case 51:
+                        level_str[i] = "52 - LOW_SVS_D2";
+                        break;
+                    case 55:
+                        level_str[i] = "56 - LOW_SVS_D1";
+                        break;
+                    case 59:
+                        level_str[i] = "60 - LOW_SVS_D0";
+                        break;
+                    case 63:
+                        level_str[i] = "64 - LOW_SVS";
+                        break;
+                    case 71:
+                        level_str[i] = "72 - LOW_SVS_P1";
+                        break;
+                    case 79:
+                        level_str[i] = "80 - LOW_SVS_L1";
+                        break;
+                    case 95:
+                        level_str[i] = "96 - LOW_SVS_L2";
+                        break;
+                    case 127:
+                        level_str[i] = "128 - SVS";
+                        break;
+                    case 143:
+                        level_str[i] = "144 - SVS_L0";
+                        break;
+                    case 191:
+                        level_str[i] = "192 - SVS_L1";
+                        break;
+                    case 223:
+                        level_str[i] = "224 - SVS_L2";
+                        break;
+                    case 255:
+                        level_str[i] = "256 - NOM";
+                        break;
+                    case 287:
+                        level_str[i] = "288 - NOM_L0";
+                        break;
+                    case 319:
+                        level_str[i] = "320 - NOM_L1";
+                        break;
+                    case 335:
+                        level_str[i] = "336 - NOM_L2";
+                        break;
+                    case 383:
+                        level_str[i] = "384 - TURBO";
+                        break;
+                    case 399:
+                        level_str[i] = "400 - TURBO_L0";
+                        break;
+                    case 415:
+                        level_str[i] = "416 - TURBO_L1";
+                        break;
+                    case 431:
+                        level_str[i] = "432 - TURBO_L2";
+                        break;
+                    case 447:
+                        level_str[i] = "448 - TURBO_L3";
+                        break;
+                    case 463:
+                        level_str[i] = "464 - SUPER_TURBO";
+                        break;
+                    case 479:
+                        level_str[i] = "480 - SUPER_TURBO_NO_CPR";
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
     }
 
     private static class rpmh_levels_pineapple {
-        public static final int[] levels = {16, 48, 52, 56, 60, 64, 72, 80, 96, 128, 144, 192,
-                224, 256, 288, 320, 336, 384, 400, 416, 432, 448, 464, 480};
-        public static final String[] level_str = {
-                "RETENTION",
-                "MIN_SVS",
-                "LOW_SVS_D2",
-                "LOW_SVS_D1",
-                "LOW_SVS_D0",
-                "LOW_SVS",
-                "LOW_SVS_P1",
-                "LOW_SVS_L1",
-                "LOW_SVS_L2",
-                "SVS",
-                "SVS_L0",
-                "SVS_L1",
-                "SVS_L2",
-                "NOM",
-                "NOM_L0",
-                "NOM_L1",
-                "NOM_L2",
-                "TURBO",
-                "TURBO_L0",
-                "TURBO_L1",
-                "TURBO_L2",
-                "TURBO_L3",
-                "SUPER_TURBO",
-                "SUPER_TURBO_NO_CPR"
-        };
+        public static final int[] levels;
+        public static final String[] level_str;
+
+        static {
+            levels = new int[480]; // 480 elements
+            level_str = new String[levels.length];
+
+            for (int i = 0; i < levels.length; i++) {
+                levels[i] = i + 1; // Start from 1
+                level_str[i] = String.valueOf(levels[i]);
+                switch (i) {
+                    case 15:
+                        level_str[i] = "16 - RETENTION";
+                        break;
+                    case 47:
+                        level_str[i] = "48 - MIN_SVS";
+                        break;
+                    case 51:
+                        level_str[i] = "52 - LOW_SVS_D2";
+                        break;
+                    case 55:
+                        level_str[i] = "56 - LOW_SVS_D1";
+                        break;
+                    case 59:
+                        level_str[i] = "60 - LOW_SVS_D0";
+                        break;
+                    case 63:
+                        level_str[i] = "64 - LOW_SVS";
+                        break;
+                    case 71:
+                        level_str[i] = "72 - LOW_SVS_P1";
+                        break;
+                    case 79:
+                        level_str[i] = "80 - LOW_SVS_L1";
+                        break;
+                    case 95:
+                        level_str[i] = "96 - LOW_SVS_L2";
+                        break;
+                    case 127:
+                        level_str[i] = "128 - SVS";
+                        break;
+                    case 143:
+                        level_str[i] = "144 - SVS_L0";
+                        break;
+                    case 191:
+                        level_str[i] = "192 - SVS_L1";
+                        break;
+                    case 223:
+                        level_str[i] = "224 - SVS_L2";
+                        break;
+                    case 255:
+                        level_str[i] = "256 - NOM";
+                        break;
+                    case 287:
+                        level_str[i] = "288 - NOM_L0";
+                        break;
+                    case 319:
+                        level_str[i] = "320 - NOM_L1";
+                        break;
+                    case 335:
+                        level_str[i] = "336 - NOM_L2";
+                        break;
+                    case 383:
+                        level_str[i] = "384 - TURBO";
+                        break;
+                    case 399:
+                        level_str[i] = "400 - TURBO_L0";
+                        break;
+                    case 415:
+                        level_str[i] = "416 - TURBO_L1";
+                        break;
+                    case 431:
+                        level_str[i] = "432 - TURBO_L2";
+                        break;
+                    case 447:
+                        level_str[i] = "448 - TURBO_L3";
+                        break;
+                    case 463:
+                        level_str[i] = "464 - SUPER_TURBO";
+                        break;
+                    case 479:
+                        level_str[i] = "480 - SUPER_TURBO_NO_CPR";
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
     }
 
     private static class rpmh_levels_cliffs {
-        public static final int[] levels = {16, 48, 52, 56, 60, 64, 72, 80, 96, 128, 144, 192,
-                224, 256, 288, 320, 336, 384, 400, 416, 432, 448, 464, 480};
-        public static final String[] level_str = {
-                "RETENTION",
-                "MIN_SVS",
-                "LOW_SVS_D2",
-                "LOW_SVS_D1",
-                "LOW_SVS_D0",
-                "LOW_SVS",
-                "LOW_SVS_P1",
-                "LOW_SVS_L1",
-                "LOW_SVS_L2",
-                "SVS",
-                "SVS_L0",
-                "SVS_L1",
-                "SVS_L2",
-                "NOM",
-                "NOM_L0",
-                "NOM_L1",
-                "NOM_L2",
-                "TURBO",
-                "TURBO_L0",
-                "TURBO_L1",
-                "TURBO_L2",
-                "TURBO_L3",
-                "SUPER_TURBO",
-                "SUPER_TURBO_NO_CPR"
-        };
+        public static final int[] levels;
+        public static final String[] level_str;
+
+        static {
+            levels = new int[480]; // 480 elements
+            level_str = new String[levels.length];
+
+            for (int i = 0; i < levels.length; i++) {
+                levels[i] = i + 1; // Start from 1
+                level_str[i] = String.valueOf(levels[i]);
+                switch (i) {
+                    case 15:
+                        level_str[i] = "16 - RETENTION";
+                        break;
+                    case 47:
+                        level_str[i] = "48 - MIN_SVS";
+                        break;
+                    case 51:
+                        level_str[i] = "52 - LOW_SVS_D2";
+                        break;
+                    case 55:
+                        level_str[i] = "56 - LOW_SVS_D1";
+                        break;
+                    case 59:
+                        level_str[i] = "60 - LOW_SVS_D0";
+                        break;
+                    case 63:
+                        level_str[i] = "64 - LOW_SVS";
+                        break;
+                    case 71:
+                        level_str[i] = "72 - LOW_SVS_P1";
+                        break;
+                    case 79:
+                        level_str[i] = "80 - LOW_SVS_L1";
+                        break;
+                    case 95:
+                        level_str[i] = "96 - LOW_SVS_L2";
+                        break;
+                    case 127:
+                        level_str[i] = "128 - SVS";
+                        break;
+                    case 143:
+                        level_str[i] = "144 - SVS_L0";
+                        break;
+                    case 191:
+                        level_str[i] = "192 - SVS_L1";
+                        break;
+                    case 223:
+                        level_str[i] = "224 - SVS_L2";
+                        break;
+                    case 255:
+                        level_str[i] = "256 - NOM";
+                        break;
+                    case 287:
+                        level_str[i] = "288 - NOM_L0";
+                        break;
+                    case 319:
+                        level_str[i] = "320 - NOM_L1";
+                        break;
+                    case 335:
+                        level_str[i] = "336 - NOM_L2";
+                        break;
+                    case 383:
+                        level_str[i] = "384 - TURBO";
+                        break;
+                    case 399:
+                        level_str[i] = "400 - TURBO_L0";
+                        break;
+                    case 415:
+                        level_str[i] = "416 - TURBO_L1";
+                        break;
+                    case 431:
+                        level_str[i] = "432 - TURBO_L2";
+                        break;
+                    case 447:
+                        level_str[i] = "448 - TURBO_L3";
+                        break;
+                    case 463:
+                        level_str[i] = "464 - SUPER_TURBO";
+                        break;
+                    case 479:
+                        level_str[i] = "480 - SUPER_TURBO_NO_CPR";
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
     }
 
     private static class rpmh_levels_sun {
-        public static final int[] levels = {16, 48, 50, 52, 56, 60, 64, 72, 80, 96, 128, 144, 192,
-                224, 256, 288, 320, 336, 384, 400, 416, 432, 448, 452, 464, 480};
-        public static final String[] level_str = {
-                "RETENTION",
-                "MIN_SVS",
-                "LOW_SVS_D3",
-                "LOW_SVS_D2",
-                "LOW_SVS_D1",
-                "LOW_SVS_D0",
-                "LOW_SVS",
-                "LOW_SVS_P1",
-                "LOW_SVS_L1",
-                "LOW_SVS_L2",
-                "SVS",
-                "SVS_L0",
-                "SVS_L1",
-                "SVS_L2",
-                "NOM",
-                "NOM_L0",
-                "NOM_L1",
-                "NOM_L2",
-                "TURBO",
-                "TURBO_L0",
-                "TURBO_L1",
-                "TURBO_L2",
-                "TURBO_L3",
-                "TURBO_L4",
-                "SUPER_TURBO",
-                "SUPER_TURBO_NO_CPR"
-        };
+        public static final int[] levels;
+        public static final String[] level_str;
+
+        static {
+            levels = new int[480]; // 480 elements
+            level_str = new String[levels.length];
+
+            for (int i = 0; i < levels.length; i++) {
+                levels[i] = i + 1; // Start from 1
+                level_str[i] = String.valueOf(levels[i]);
+                switch (i) {
+                    case 15:
+                        level_str[i] = "16 - RETENTION";
+                        break;
+                    case 47:
+                        level_str[i] = "48 - MIN_SVS";
+                        break;
+                    case 49:
+                        level_str[i] = "50 - LOW_SVS_D3";
+                        break;
+                    case 51:
+                        level_str[i] = "52 - LOW_SVS_D2";
+                        break;
+                    case 55:
+                        level_str[i] = "56 - LOW_SVS_D1";
+                        break;
+                    case 59:
+                        level_str[i] = "60 - LOW_SVS_D0";
+                        break;
+                    case 63:
+                        level_str[i] = "64 - LOW_SVS";
+                        break;
+                    case 71:
+                        level_str[i] = "72 - LOW_SVS_P1";
+                        break;
+                    case 79:
+                        level_str[i] = "80 - LOW_SVS_L1";
+                        break;
+                    case 95:
+                        level_str[i] = "96 - LOW_SVS_L2";
+                        break;
+                    case 127:
+                        level_str[i] = "128 - SVS";
+                        break;
+                    case 143:
+                        level_str[i] = "144 - SVS_L0";
+                        break;
+                    case 191:
+                        level_str[i] = "192 - SVS_L1";
+                        break;
+                    case 223:
+                        level_str[i] = "224 - SVS_L2";
+                        break;
+                    case 255:
+                        level_str[i] = "256 - NOM";
+                        break;
+                    case 287:
+                        level_str[i] = "288 - NOM_L0";
+                        break;
+                    case 319:
+                        level_str[i] = "320 - NOM_L1";
+                        break;
+                    case 335:
+                        level_str[i] = "336 - NOM_L2";
+                        break;
+                    case 383:
+                        level_str[i] = "384 - TURBO";
+                        break;
+                    case 399:
+                        level_str[i] = "400 - TURBO_L0";
+                        break;
+                    case 415:
+                        level_str[i] = "416 - TURBO_L1";
+                        break;
+                    case 431:
+                        level_str[i] = "432 - TURBO_L2";
+                        break;
+                    case 447:
+                        level_str[i] = "448 - TURBO_L3";
+                        break;
+                    case 451:
+                        level_str[i] = "452 - TURBO_L4";
+                        break;
+                    case 463:
+                        level_str[i] = "464 - SUPER_TURBO";
+                        break;
+                    case 479:
+                        level_str[i] = "480 - SUPER_TURBO_NO_CPR";
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
     }
 
+
     private static class rpmh_levels_canoe {
-        public static final int[] levels = {16, 48, 50, 51, 52, 54, 56, 60, 64, 72, 80, 96, 128, 144, 192,
-                224, 256, 288, 320, 336, 384, 400, 416, 432, 448, 452, 464, 480};
-        public static final String[] level_str = {
-                "RETENTION",
-                "MIN_SVS",
-                "LOW_SVS_D3",
-                "LOW_SVS_D2_5", // todo: Synchronize the actual name from regulator headers
-                "LOW_SVS_D2",
-                "LOW_SVS_D1_5", // todo: Synchronize the actual name from regulator headers
-                "LOW_SVS_D1",
-                "LOW_SVS_D0",
-                "LOW_SVS",
-                "LOW_SVS_P1",
-                "LOW_SVS_L1",
-                "LOW_SVS_L2",
-                "SVS",
-                "SVS_L0",
-                "SVS_L1",
-                "SVS_L2",
-                "NOM",
-                "NOM_L0",
-                "NOM_L1",
-                "NOM_L2",
-                "TURBO",
-                "TURBO_L0",
-                "TURBO_L1",
-                "TURBO_L2",
-                "TURBO_L3",
-                "TURBO_L4",
-                "SUPER_TURBO",
-                "SUPER_TURBO_NO_CPR"
-        };
+        public static final int[] levels;
+        public static final String[] level_str;
+
+        static {
+            levels = new int[480]; // 480 elements
+            level_str = new String[levels.length];
+
+            for (int i = 0; i < levels.length; i++) {
+                levels[i] = i + 1; // Start from 1
+                level_str[i] = String.valueOf(levels[i]);
+                switch (i) {
+                    case 15:
+                        level_str[i] = "16 - RETENTION";
+                        break;
+                    case 47:
+                        level_str[i] = "48 - MIN_SVS";
+                        break;
+                    case 49:
+                        level_str[i] = "50 - LOW_SVS_D3";
+                        break;
+                    case 50:
+                        level_str[i] = "51 - LOW_SVS_D2_5"; // todo: Synchronize the actual name from regulator headers
+                        break;
+                    case 51:
+                        level_str[i] = "52 - LOW_SVS_D2";
+                        break;
+                    case 53:
+                        level_str[i] = "54 - LOW_SVS_D1_5"; // todo: Synchronize the actual name from regulator headers
+                        break;
+                    case 55:
+                        level_str[i] = "56 - LOW_SVS_D1";
+                        break;
+                    case 59:
+                        level_str[i] = "60 - LOW_SVS_D0";
+                        break;
+                    case 63:
+                        level_str[i] = "64 - LOW_SVS";
+                        break;
+                    case 71:
+                        level_str[i] = "72 - LOW_SVS_P1";
+                        break;
+                    case 79:
+                        level_str[i] = "80 - LOW_SVS_L1";
+                        break;
+                    case 95:
+                        level_str[i] = "96 - LOW_SVS_L2";
+                        break;
+                    case 127:
+                        level_str[i] = "128 - SVS";
+                        break;
+                    case 143:
+                        level_str[i] = "144 - SVS_L0";
+                        break;
+                    case 191:
+                        level_str[i] = "192 - SVS_L1";
+                        break;
+                    case 223:
+                        level_str[i] = "224 - SVS_L2";
+                        break;
+                    case 255:
+                        level_str[i] = "256 - NOM";
+                        break;
+                    case 287:
+                        level_str[i] = "288 - NOM_L0";
+                        break;
+                    case 319:
+                        level_str[i] = "320 - NOM_L1";
+                        break;
+                    case 335:
+                        level_str[i] = "336 - NOM_L2";
+                        break;
+                    case 383:
+                        level_str[i] = "384 - TURBO";
+                        break;
+                    case 399:
+                        level_str[i] = "400 - TURBO_L0";
+                        break;
+                    case 415:
+                        level_str[i] = "416 - TURBO_L1";
+                        break;
+                    case 431:
+                        level_str[i] = "432 - TURBO_L2";
+                        break;
+                    case 447:
+                        level_str[i] = "448 - TURBO_L3";
+                        break;
+                    case 451:
+                        level_str[i] = "452 - TURBO_L4";
+                        break;
+                    case 463:
+                        level_str[i] = "464 - SUPER_TURBO";
+                        break;
+                    case 479:
+                        level_str[i] = "480 - SUPER_TURBO_NO_CPR";
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
     }
 
     private static class rpmh_levels_tuna {
-        public static final int[] levels = {16, 48, 52, 56, 60, 64, 80, 96, 128, 144, 192,
-                224, 256, 320, 336, 352, 384, 400, 416, 432, 448};
-        public static final String[] level_str = {
-                "RETENTION",
-                "MIN_SVS",
-                "LOW_SVS_D2",
-                "LOW_SVS_D1",
-                "LOW_SVS_D0",
-                "LOW_SVS",
-                "LOW_SVS_L1",
-                "LOW_SVS_L2",
-                "SVS",
-                "SVS_L0",
-                "SVS_L1",
-                "SVS_L2",
-                "NOM",
-                "NOM_L1",
-                "NOM_L2",
-                "NOM_L3",
-                "TURBO",
-                "TURBO_L0",
-                "TURBO_L1",
-                "TURBO_L2",
-                "TURBO_L3"
-        };
+        public static final int[] levels;
+        public static final String[] level_str;
+
+        static {
+            levels = new int[480]; // 480 elements
+            level_str = new String[levels.length];
+
+            for (int i = 0; i < levels.length; i++) {
+                levels[i] = i + 1; // Start from 1
+                level_str[i] = String.valueOf(levels[i]);
+                switch (i) {
+                    case 15:
+                        level_str[i] = "16 - RETENTION";
+                        break;
+                    case 47:
+                        level_str[i] = "48 - MIN_SVS";
+                        break;
+                    case 49:
+                        level_str[i] = "50 - LOW_SVS_D3";
+                        break;
+                    case 50:
+                        level_str[i] = "51 - LOW_SVS_D2_5"; // todo: Synchronize the actual name from regulator headers
+                        break;
+                    case 51:
+                        level_str[i] = "52 - LOW_SVS_D2";
+                        break;
+                    case 53:
+                        level_str[i] = "54 - LOW_SVS_D1_5"; // todo: Synchronize the actual name from regulator headers
+                        break;
+                    case 55:
+                        level_str[i] = "56 - LOW_SVS_D1";
+                        break;
+                    case 59:
+                        level_str[i] = "60 - LOW_SVS_D0";
+                        break;
+                    case 63:
+                        level_str[i] = "64 - LOW_SVS";
+                        break;
+                    case 71:
+                        level_str[i] = "72 - LOW_SVS_P1";
+                        break;
+                    case 79:
+                        level_str[i] = "80 - LOW_SVS_L1";
+                        break;
+                    case 95:
+                        level_str[i] = "96 - LOW_SVS_L2";
+                        break;
+                    case 127:
+                        level_str[i] = "128 - SVS";
+                        break;
+                    case 143:
+                        level_str[i] = "144 - SVS_L0";
+                        break;
+                    case 191:
+                        level_str[i] = "192 - SVS_L1";
+                        break;
+                    case 223:
+                        level_str[i] = "224 - SVS_L2";
+                        break;
+                    case 255:
+                        level_str[i] = "256 - NOM";
+                        break;
+                    case 287:
+                        level_str[i] = "288 - NOM_L0";
+                        break;
+                    case 319:
+                        level_str[i] = "320 - NOM_L1";
+                        break;
+                    case 335:
+                        level_str[i] = "336 - NOM_L2";
+                        break;
+                    case 383:
+                        level_str[i] = "384 - TURBO";
+                        break;
+                    case 399:
+                        level_str[i] = "400 - TURBO_L0";
+                        break;
+                    case 415:
+                        level_str[i] = "416 - TURBO_L1";
+                        break;
+                    case 431:
+                        level_str[i] = "432 - TURBO_L2";
+                        break;
+                    case 447:
+                        level_str[i] = "448 - TURBO_L3";
+                        break;
+                    case 451:
+                        level_str[i] = "452 - TURBO_L4";
+                        break;
+                    case 463:
+                        level_str[i] = "464 - SUPER_TURBO";
+                        break;
+                    case 479:
+                        level_str[i] = "480 - SUPER_TURBO_NO_CPR";
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
     }
 }
