@@ -1,7 +1,6 @@
 package xzr.konabess;
 
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.res.ColorStateList;
@@ -18,8 +17,11 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AlertDialog;
+
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.color.MaterialColors;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import android.os.Looper;
 
@@ -787,7 +789,7 @@ public class GpuTableEditor {
             return;
         }
         if (changeHistory.isEmpty()) {
-            new AlertDialog.Builder(activity)
+            new com.google.android.material.dialog.MaterialAlertDialogBuilder(activity)
                     .setTitle(R.string.history_title)
                     .setMessage(R.string.history_empty)
                     .setPositiveButton(R.string.ok, null)
@@ -796,7 +798,7 @@ public class GpuTableEditor {
             return;
         }
         CharSequence[] entries = changeHistory.toArray(new CharSequence[0]);
-        new AlertDialog.Builder(activity)
+        new com.google.android.material.dialog.MaterialAlertDialogBuilder(activity)
                 .setTitle(R.string.history_title)
                 .setItems(entries, null)
                 .setPositiveButton(R.string.ok, null)
@@ -976,7 +978,7 @@ public class GpuTableEditor {
                 spinner.setAdapter(levelAdapter);
                 spinner.setSelection(GpuVoltEditor.levelint2int(Integer.parseInt(raw_value)));
 
-                new AlertDialog.Builder(activity)
+                new com.google.android.material.dialog.MaterialAlertDialogBuilder(activity)
                         .setTitle(R.string.edit)
                         .setView(spinner)
                         .setMessage(R.string.editvolt_msg)
@@ -1020,7 +1022,7 @@ public class GpuTableEditor {
             editText.setInputType(DtsHelper.shouldUseHex(raw_name) ?
                     InputType.TYPE_CLASS_TEXT : InputType.TYPE_CLASS_NUMBER);
             editText.setText(raw_value);
-            new AlertDialog.Builder(activity)
+            new com.google.android.material.dialog.MaterialAlertDialogBuilder(activity)
                     .setTitle(activity.getResources().getString(R.string.edit) + " \"" + paramTitle + "\"")
                     .setView(editText)
                     .setMessage(KonaBessStr.help(raw_name, activity))
@@ -1500,7 +1502,7 @@ public class GpuTableEditor {
             try {
                 final long freqValue = getFrequencyFromLevel(bins.get(id).levels.get(levelPosition));
                 final String freqLabel = SettingsActivity.formatFrequency(freqValue, activity);
-                new AlertDialog.Builder(activity)
+                new com.google.android.material.dialog.MaterialAlertDialogBuilder(activity)
                         .setTitle(R.string.remove)
                         .setMessage(activity.getString(R.string.remove_frequency_message, freqLabel))
                         .setPositiveButton(R.string.yes, (dialog, which) -> {
@@ -1705,7 +1707,7 @@ public class GpuTableEditor {
         
         listView.setAdapter(new ParamAdapter(items, activity));
         
-        AlertDialog dialog = new AlertDialog.Builder(activity)
+        AlertDialog dialog = new com.google.android.material.dialog.MaterialAlertDialogBuilder(activity)
                 .setTitle("Select Target Chipset")
                 .setMessage("Choose the chipset configuration you want to edit")
                 .setView(listView)
@@ -1718,7 +1720,7 @@ public class GpuTableEditor {
             
             // Show confirmation if switching chipset
             if (currentDtb != null && selectedDtb.id != currentDtb.id) {
-                new AlertDialog.Builder(activity)
+                new com.google.android.material.dialog.MaterialAlertDialogBuilder(activity)
                         .setTitle("Switch Chipset?")
                         .setMessage("Switching chipset will reload the GPU frequency table. Continue?")
                         .setPositiveButton("Yes", (d, w) -> {

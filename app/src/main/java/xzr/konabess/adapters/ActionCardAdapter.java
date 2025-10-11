@@ -21,11 +21,17 @@ public class ActionCardAdapter extends RecyclerView.Adapter<ActionCardAdapter.Vi
         public int iconResId;
         public String title;
         public String description;
+        public boolean enabled;
 
         public ActionItem(int iconResId, String title, String description) {
+            this(iconResId, title, description, true);
+        }
+
+        public ActionItem(int iconResId, String title, String description, boolean enabled) {
             this.iconResId = iconResId;
             this.title = title;
             this.description = description;
+            this.enabled = enabled;
         }
     }
 
@@ -57,11 +63,24 @@ public class ActionCardAdapter extends RecyclerView.Adapter<ActionCardAdapter.Vi
         holder.icon.setImageResource(item.iconResId);
         holder.title.setText(item.title);
         holder.description.setText(item.description);
+        holder.card.setEnabled(item.enabled);
+        holder.card.setClickable(item.enabled);
+        holder.card.setFocusable(item.enabled);
+        holder.card.setAlpha(item.enabled ? 1f : 0.5f);
+
         holder.card.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (clickListener != null) {
-                    clickListener.onItemClick(holder.getBindingAdapterPosition());
+                if (clickListener == null) {
+                    return;
+                }
+                int adapterPosition = holder.getBindingAdapterPosition();
+                if (adapterPosition == RecyclerView.NO_POSITION) {
+                    return;
+                }
+                ActionItem actionItem = items.get(adapterPosition);
+                if (actionItem.enabled) {
+                    clickListener.onItemClick(adapterPosition);
                 }
             }
         });

@@ -1,12 +1,15 @@
 package xzr.konabess;
 
 import android.app.Activity;
-import android.app.AlertDialog;
+import androidx.appcompat.app.AlertDialog;
 import android.content.DialogInterface;
 import android.os.Environment;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
+
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -123,7 +126,7 @@ public class TableIO {
         EditText editText = new EditText(activity);
         editText.setHint(activity.getResources().getString(R.string.paste_here));
 
-    new AlertDialog.Builder(activity)
+    new com.google.android.material.dialog.MaterialAlertDialogBuilder(activity)
         .setTitle(R.string.import_data)
         .setView(editText)
         .setPositiveButton(R.string.confirm, (dialog, which) -> {
@@ -145,7 +148,7 @@ public class TableIO {
         EditText editText = new EditText(activity);
         editText.setHint(R.string.input_introduction_here);
 
-    new AlertDialog.Builder(activity)
+    new com.google.android.material.dialog.MaterialAlertDialogBuilder(activity)
         .setTitle(R.string.export_data)
         .setMessage(R.string.export_data_msg)
         .setView(editText)
@@ -235,7 +238,7 @@ public class TableIO {
                     activity.runOnUiThread(() -> {
                         waiting_import.dismiss();
                         try {
-                            new AlertDialog.Builder(activity)
+                            new com.google.android.material.dialog.MaterialAlertDialogBuilder(activity)
                                     .setTitle(R.string.going_import)
                                     .setMessage(jsonObject.getString(json_keys.DESCRIPTION) + "\n"
                                             + activity.getResources().getString(R.string.compatible_chip) + ChipInfo.name2chipdesc(jsonObject.getString(json_keys.CHIP), activity))
@@ -320,6 +323,8 @@ public class TableIO {
         recyclerView.setClipToPadding(false);
 
         ArrayList<ActionCardAdapter.ActionItem> items = new ArrayList<>();
+        boolean canExport = KonaBessCore.isPrepared();
+
     items.add(new ActionCardAdapter.ActionItem(
         R.drawable.ic_file_download,
                 activity.getResources().getString(R.string.import_from_file),
@@ -327,7 +332,8 @@ public class TableIO {
     items.add(new ActionCardAdapter.ActionItem(
         R.drawable.ic_file_upload,
                 activity.getResources().getString(R.string.export_to_file),
-                activity.getResources().getString(R.string.export_to_file_msg)));
+                activity.getResources().getString(R.string.export_to_file_msg),
+                canExport));
     items.add(new ActionCardAdapter.ActionItem(
         R.drawable.ic_clipboard_import,
                 activity.getResources().getString(R.string.import_from_clipboard),
@@ -335,16 +341,24 @@ public class TableIO {
     items.add(new ActionCardAdapter.ActionItem(
         R.drawable.ic_clipboard_export,
                 activity.getResources().getString(R.string.export_to_clipboard),
-                activity.getResources().getString(R.string.export_to_clipboard_msg)));
+                activity.getResources().getString(R.string.export_to_clipboard_msg),
+                canExport));
         items.add(new ActionCardAdapter.ActionItem(
                 R.drawable.ic_backup,
                 activity.getResources().getString(R.string.backup_image),
-                activity.getResources().getString(R.string.backup_image_desc)));
+                activity.getResources().getString(R.string.backup_image_desc),
+                canExport));
 
         ActionCardAdapter adapter = new ActionCardAdapter(items);
         adapter.setOnItemClickListener(new ActionCardAdapter.OnItemClickListener() {
             @Override
             public void onItemClick(int position) {
+                ActionCardAdapter.ActionItem selectedItem = items.get(position);
+                if (!selectedItem.enabled) {
+                    Toast.makeText(activity, R.string.export_requires_chipset,
+                            Toast.LENGTH_SHORT).show();
+                    return;
+                }
                 if (position == 0) {
                     MainActivity.runWithFilePath(activity, new importFromFile(activity));
                 } else if (position == 1) {
@@ -365,7 +379,7 @@ public class TableIO {
                     });
                 } else if (position == 4) {
                     MainActivity mainActivity = (MainActivity) activity;
-                    new AlertDialog.Builder(mainActivity)
+                    new com.google.android.material.dialog.MaterialAlertDialogBuilder(mainActivity)
                             .setTitle(R.string.backup_old_image)
                             .setMessage(activity.getResources().getString(R.string.will_backup_to) + " /sdcard/" + KonaBessCore.boot_name + ".img")
                             .setPositiveButton(R.string.ok, (dialog, which) -> {
@@ -383,6 +397,14 @@ public class TableIO {
         recyclerView.setAdapter(adapter);
 
         page.removeAllViews();
+    if (!canExport) {
+        TextView hintView = new TextView(activity);
+        hintView.setText(R.string.export_requires_chipset);
+        hintView.setPadding(0, 0, 0, 24);
+        page.addView(hintView, new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT));
+    }
         page.addView(recyclerView, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT));

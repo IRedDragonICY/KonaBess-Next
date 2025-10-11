@@ -1,6 +1,6 @@
 package xzr.konabess;
 
-import android.app.AlertDialog;
+import androidx.appcompat.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -186,7 +186,7 @@ public class SettingsActivity extends AppCompatActivity {
 
         String[] languageCodes = {LANGUAGE_ENGLISH, LANGUAGE_GERMAN, LANGUAGE_CHINESE, LANGUAGE_INDONESIAN};
 
-        new AlertDialog.Builder(this)
+        new com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
                 .setTitle(getString(R.string.language))
                 .setSingleChoiceItems(languages, getCurrentLanguageIndex(), (dialog, which) -> {
                     saveLanguage(languageCodes[which]);
@@ -209,7 +209,7 @@ public class SettingsActivity extends AppCompatActivity {
             getString(R.string.theme_dark)
         };
 
-        new AlertDialog.Builder(this)
+        new com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
                 .setTitle(getString(R.string.theme))
                 .setSingleChoiceItems(themes, getSavedTheme(), (dialog, which) -> {
                     saveTheme(which);
@@ -233,7 +233,7 @@ public class SettingsActivity extends AppCompatActivity {
             getString(R.string.ghz)
         };
 
-        new AlertDialog.Builder(this)
+        new com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
                 .setTitle(getString(R.string.gpu_freq_unit))
                 .setSingleChoiceItems(units, getSavedFreqUnit(), (dialog, which) -> {
                     saveFreqUnit(which);
@@ -250,12 +250,12 @@ public class SettingsActivity extends AppCompatActivity {
     }
 
     private void showHelpDialog() {
-        new AlertDialog.Builder(this)
+        new com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
                 .setTitle(getString(R.string.help))
                 .setMessage(KonaBessStr.generic_help(this))
                 .setPositiveButton(getString(R.string.ok), null)
                 .setNeutralButton(getString(R.string.about),
-                        (dialog, which) -> new AlertDialog.Builder(this)
+                        (dialog, which) -> new com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
                                 .setTitle(getString(R.string.about))
                                 .setMessage(getResources().getString(R.string.author) + " " +
                                         "xzr467706992 (LibXZR)\n" + getResources().getString(R.string.release_at) + " www.akr-developers.com\n")

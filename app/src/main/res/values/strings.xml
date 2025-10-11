@@ -162,6 +162,12 @@
     <string name="export_config_desc">Save current GPU settings to file</string>
     <string name="import_config">Import Configuration</string>
     <string name="import_config_desc">Load GPU settings from file</string>
+    <string name="gpu_prep_prompt">Start device detection to load GPU frequency tables for your chipset.</string>
+    <string name="gpu_prep_start">Detect chipset</string>
+    <string name="gpu_prep_loading">Detecting chipset...</string>
+    <string name="gpu_prep_failed">Unable to detect a compatible chipset. Check root access and try again.</string>
+    <string name="gpu_prep_retry">Try again</string>
+    <string name="export_requires_chipset">Select a chipset in the GPU tab to enable export and backup actions.</string>
     
     <!-- Drag & Drop & Theme Strings -->
     <string name="drag_handle">Drag to reorder</string>

@@ -2,7 +2,6 @@ package xzr.konabess;
 
 import android.Manifest;
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -13,6 +12,7 @@ import android.widget.ListView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
@@ -20,6 +20,7 @@ import androidx.viewpager2.widget.ViewPager2;
 
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -37,9 +38,13 @@ public class MainActivity extends AppCompatActivity {
     private static final String KEY_LAST_GPU_TITLE = "key_last_gpu_toolbar_title";
     private static final String KEY_CURRENT_TITLE = "key_current_toolbar_title";
 
-    AlertDialog waiting;
+    androidx.appcompat.app.AlertDialog waiting;
     boolean cross_device_debug = false;
     onBackPressedListener onBackPressedListener = null;
+
+    private final Object preparationLock = new Object();
+    private final ArrayList<DevicePreparationListener> preparationListeners = new ArrayList<>();
+    private boolean isPreparingDevice = false;
     
     private ViewPager2 viewPager;
     private BottomNavigationView bottomNav;
@@ -70,23 +75,20 @@ public class MainActivity extends AppCompatActivity {
             currentTitle = savedInstanceState.getString(KEY_CURRENT_TITLE);
         }
 
-        if (KonaBessCore.isPrepared()) {
-            showMainView();
-            return;
+        if (!KonaBessCore.isPrepared()) {
+            ChipInfo.which = ChipInfo.type.unknown;
+
+            try {
+                if (!cross_device_debug)
+                    KonaBessCore.cleanEnv(this);
+                KonaBessCore.setupEnv(this);
+            } catch (Exception e) {
+                DialogUtil.showError(this, R.string.environ_setup_failed);
+                return;
+            }
         }
 
-        ChipInfo.which = ChipInfo.type.unknown;
-
-        try {
-            if (!cross_device_debug)
-                KonaBessCore.cleanEnv(this);
-            KonaBessCore.setupEnv(this);
-        } catch (Exception e) {
-            DialogUtil.showError(this, R.string.environ_setup_failed);
-            return;
-        }
-
-        new unpackLogic().start();
+        showMainView();
     }
 
     @Override
@@ -268,6 +270,70 @@ public class MainActivity extends AppCompatActivity {
         return currentTitle;
     }
 
+    public interface DevicePreparationListener {
+        void onPrepared();
+
+        void onFailed();
+    }
+
+    public void ensureDevicePrepared(DevicePreparationListener listener) {
+        if (KonaBessCore.isPrepared()) {
+            if (listener != null) {
+                runOnUiThread(listener::onPrepared);
+            }
+            return;
+        }
+
+        boolean shouldStart = false;
+        synchronized (preparationLock) {
+            if (listener != null) {
+                preparationListeners.add(listener);
+            }
+            if (!isPreparingDevice) {
+                isPreparingDevice = true;
+                shouldStart = true;
+            }
+        }
+
+        if (shouldStart) {
+            new unpackLogic().start();
+        }
+    }
+
+    public boolean isDevicePreparationRunning() {
+        synchronized (preparationLock) {
+            return isPreparingDevice;
+        }
+    }
+
+    private void notifyPreparationSuccess() {
+        ArrayList<DevicePreparationListener> listeners;
+        synchronized (preparationLock) {
+            listeners = new ArrayList<>(preparationListeners);
+            preparationListeners.clear();
+            isPreparingDevice = false;
+        }
+        for (DevicePreparationListener listener : listeners) {
+            if (listener != null) {
+                runOnUiThread(listener::onPrepared);
+            }
+        }
+    }
+
+    private void notifyPreparationFailed() {
+        ArrayList<DevicePreparationListener> listeners;
+        synchronized (preparationLock) {
+            listeners = new ArrayList<>(preparationListeners);
+            preparationListeners.clear();
+            isPreparingDevice = false;
+        }
+        for (DevicePreparationListener listener : listeners) {
+            if (listener != null) {
+                runOnUiThread(listener::onFailed);
+            }
+        }
+    }
+
     public class backupBoot extends Thread {
         Activity activity;
         AlertDialog waiting;
@@ -344,7 +410,7 @@ public class MainActivity extends AppCompatActivity {
                     if (is_err)
                         DialogUtil.showError(MainActivity.this, R.string.flashing_failed);
                     else {
-                        new AlertDialog.Builder(MainActivity.this)
+                        new com.google.android.material.dialog.MaterialAlertDialogBuilder(MainActivity.this)
                                 .setTitle(R.string.reboot_complete_title)
                                 .setMessage(R.string.reboot_complete_msg)
                                 .setPositiveButton(R.string.yes, (dialog, which) -> {
@@ -386,8 +452,10 @@ public class MainActivity extends AppCompatActivity {
                     if (is_err)
                         DialogUtil.showError(MainActivity.this, R.string.failed_get_boot);
                 });
-                if (is_err)
+                if (is_err) {
+                    notifyPreparationFailed();
                     return;
+                }
             }
 
             {
@@ -407,8 +475,10 @@ public class MainActivity extends AppCompatActivity {
                         DialogUtil.showDetailedError(MainActivity.this, R.string.unpack_failed,
                                 error);
                 });
-                if (is_err)
+                if (is_err) {
+                    notifyPreparationFailed();
                     return;
+                }
             }
 
             {
@@ -429,18 +499,21 @@ public class MainActivity extends AppCompatActivity {
                         DialogUtil.showDetailedError(MainActivity.this,
                                 R.string.failed_checking_platform, error);
                 });
-                if (is_err)
+                if (is_err) {
+                    notifyPreparationFailed();
                     return;
+                }
             }
 
             runOnUiThread(() -> {
                 if (KonaBessCore.dtbs.size() == 0) {
                     DialogUtil.showError(MainActivity.this, R.string.incompatible_device);
+                    notifyPreparationFailed();
                     return;
                 }
                 if (KonaBessCore.dtbs.size() == 1) {
                     KonaBessCore.chooseTarget(KonaBessCore.dtbs.get(0), MainActivity.this);
-                    showMainView();
+                    notifyPreparationSuccess();
                     return;
                 }
                 ListView listView = new ListView(MainActivity.this);
@@ -454,7 +527,7 @@ public class MainActivity extends AppCompatActivity {
                 }
                 listView.setAdapter(new ParamAdapter(items, MainActivity.this));
 
-                AlertDialog dialog = new AlertDialog.Builder(MainActivity.this)
+                AlertDialog dialog = new com.google.android.material.dialog.MaterialAlertDialogBuilder(MainActivity.this)
                         .setTitle(R.string.select_dtb_title)
                         .setMessage(R.string.select_dtb_msg)
                         .setView(listView)
@@ -465,7 +538,7 @@ public class MainActivity extends AppCompatActivity {
                 listView.setOnItemClickListener((parent, view, position, id) -> {
                     KonaBessCore.chooseTarget(KonaBessCore.dtbs.get(position), MainActivity.this);
                     dialog.dismiss();
-                    showMainView();
+                    notifyPreparationSuccess();
                 });
             });
         }

@@ -1,7 +1,7 @@
 package xzr.konabess;
 
 import android.app.Activity;
-import android.app.AlertDialog;
+import androidx.appcompat.app.AlertDialog;
 import android.text.InputType;
 import android.view.View;
 import android.widget.ArrayAdapter;
@@ -12,6 +12,8 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.Spinner;
 import android.widget.Toast;
+
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -260,7 +262,7 @@ public class GpuVoltEditor {
                 EditText editText = new EditText(activity);
                 editText.setText(opps.get(voltn).frequency + "");
                 editText.setInputType(InputType.TYPE_CLASS_NUMBER);
-                new AlertDialog.Builder(activity)
+                new com.google.android.material.dialog.MaterialAlertDialogBuilder(activity)
                         .setTitle(R.string.edit)
                         .setMessage(R.string.volt_freq_msg)
                         .setView(editText)
@@ -284,7 +286,7 @@ public class GpuVoltEditor {
                             ChipInfo.rpmh_levels.level_str()));
                     spinner.setSelection(levelint2int(opps.get(voltn).volt));
 
-                    new AlertDialog.Builder(activity)
+                    new com.google.android.material.dialog.MaterialAlertDialogBuilder(activity)
                             .setTitle(R.string.edit)
                             .setView(spinner)
                             .setMessage(R.string.editvolt_msg)
@@ -372,7 +374,7 @@ public class GpuVoltEditor {
                 return true;
             position--;
             int finalPosition = position;
-            new AlertDialog.Builder(activity)
+            new com.google.android.material.dialog.MaterialAlertDialogBuilder(activity)
                     .setTitle(R.string.remove)
                     .setMessage("Are you sure to remove the voltage level of " + SettingsActivity.formatFrequency(opps.get(position).frequency, activity) + "?")
                     .setPositiveButton(R.string.yes, (dialog, which) -> {

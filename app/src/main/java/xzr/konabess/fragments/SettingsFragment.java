@@ -1,6 +1,6 @@
 package xzr.konabess.fragments;
 
-import android.app.AlertDialog;
+import androidx.appcompat.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -15,6 +15,8 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import java.util.ArrayList;
 
@@ -125,7 +127,7 @@ public class SettingsFragment extends Fragment {
 
     int currentTheme = prefs.getInt(SettingsActivity.KEY_THEME, SettingsActivity.THEME_SYSTEM);
 
-        new AlertDialog.Builder(requireContext())
+        new com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
                 .setTitle(getString(R.string.theme))
                 .setSingleChoiceItems(themes, currentTheme, (dialog, which) -> {
                     prefs.edit().putInt(SettingsActivity.KEY_THEME, which).apply();
@@ -150,7 +152,7 @@ public class SettingsFragment extends Fragment {
 
     int currentPalette = prefs.getInt(SettingsActivity.KEY_COLOR_PALETTE, 0);
 
-        new AlertDialog.Builder(requireContext())
+        new com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
                 .setTitle("Color Palette")
                 .setSingleChoiceItems(palettes, currentPalette, (dialog, which) -> {
                     prefs.edit().putInt(SettingsActivity.KEY_COLOR_PALETTE, which).apply();
@@ -180,7 +182,7 @@ public class SettingsFragment extends Fragment {
 
         int currentIndex = getCurrentLanguageIndex();
 
-        new AlertDialog.Builder(requireContext())
+        new com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
                 .setTitle(getString(R.string.language))
                 .setSingleChoiceItems(languages, currentIndex, (dialog, which) -> {
                     prefs.edit().putString(SettingsActivity.KEY_LANGUAGE, languageCodes[which]).apply();
@@ -201,7 +203,7 @@ public class SettingsFragment extends Fragment {
 
     int currentUnit = prefs.getInt(SettingsActivity.KEY_FREQ_UNIT, SettingsActivity.FREQ_UNIT_MHZ);
 
-        new AlertDialog.Builder(requireContext())
+        new com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
                 .setTitle(getString(R.string.gpu_freq_unit))
                 .setSingleChoiceItems(units, currentUnit, (dialog, which) -> {
                     prefs.edit().putInt(SettingsActivity.KEY_FREQ_UNIT, which).apply();
@@ -213,12 +215,12 @@ public class SettingsFragment extends Fragment {
     }
 
     private void showHelpDialog() {
-        new AlertDialog.Builder(requireContext())
+        new com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
                 .setTitle(getString(R.string.help))
                 .setMessage(KonaBessStr.generic_help(requireActivity()))
                 .setPositiveButton(getString(R.string.ok), null)
                 .setNeutralButton(getString(R.string.about),
-                        (dialog, which) -> new AlertDialog.Builder(requireContext())
+                        (dialog, which) -> new com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
                                 .setTitle(getString(R.string.about))
                                 .setMessage(getResources().getString(R.string.author) + " " +
                                         "xzr467706992 (LibXZR)\n" + getResources().getString(R.string.release_at) + " www.akr-developers.com\n")
