@@ -21,6 +21,8 @@ import android.widget.Toast;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.color.MaterialColors;
 
+import android.os.Looper;
+
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -37,8 +39,10 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 
 import xzr.konabess.adapters.GpuBinAdapter;
@@ -69,6 +73,7 @@ public class GpuTableEditor {
     private static final Deque<EditorState> undoStack = new ArrayDeque<>();
     private static final Deque<EditorState> redoStack = new ArrayDeque<>();
     private static final ArrayList<String> changeHistory = new ArrayList<>();
+    private static final Map<Integer, EditorSession> sessionCache = new HashMap<>();
 
     private static Activity currentActivity;
     private static LinearLayout currentPage;
@@ -82,6 +87,37 @@ public class GpuTableEditor {
 
     private static boolean isDirty = false;
     private static String lastSavedSignature;
+
+    private static class EditorSession {
+        ArrayList<String> linesInDts;
+        ArrayList<bin> binsSnapshot;
+        int binPosition;
+        Deque<EditorState> undoStates;
+        Deque<EditorState> redoStates;
+        ArrayList<String> history;
+        String savedSignature;
+        boolean dirty;
+        Integer selectedBinIndex;
+        Integer selectedLevelIndex;
+    }
+
+    private static boolean isOnMainThread() {
+        return Looper.myLooper() == Looper.getMainLooper();
+    }
+
+    private static void runOnMainThread(Runnable action) {
+        if (action == null) {
+            return;
+        }
+        if (isOnMainThread()) {
+            action.run();
+            return;
+        }
+        Activity activity = currentActivity;
+        if (activity != null) {
+            activity.runOnUiThread(action);
+        }
+    }
 
     private static class EditorState {
         ArrayList<String> linesInDts;
@@ -428,6 +464,81 @@ public class GpuTableEditor {
         bin_position = state.binPosition;
     }
 
+    private static EditorState cloneEditorState(EditorState original) {
+        if (original == null) {
+            return null;
+        }
+        EditorState copy = new EditorState();
+        copy.linesInDts = original.linesInDts != null
+                ? new ArrayList<>(original.linesInDts)
+                : new ArrayList<>();
+        copy.binsSnapshot = cloneBinsList(original.binsSnapshot);
+        copy.binPosition = original.binPosition;
+        return copy;
+    }
+
+    private static Deque<EditorState> cloneEditorStateDeque(Deque<EditorState> source) {
+        ArrayDeque<EditorState> clone = new ArrayDeque<>();
+        if (source == null) {
+            return clone;
+        }
+        for (EditorState state : source) {
+            clone.addLast(cloneEditorState(state));
+        }
+        return clone;
+    }
+
+    private static void saveCurrentSession() {
+        KonaBessCore.dtb current = KonaBessCore.getCurrentDtb();
+        if (current == null || lines_in_dts == null || bins == null) {
+            return;
+        }
+        EditorSession session = new EditorSession();
+        session.linesInDts = new ArrayList<>(lines_in_dts);
+        session.binsSnapshot = cloneBinsList(bins);
+        session.binPosition = bin_position;
+        session.undoStates = cloneEditorStateDeque(undoStack);
+        session.redoStates = cloneEditorStateDeque(redoStack);
+        session.history = new ArrayList<>(changeHistory);
+        session.savedSignature = lastSavedSignature;
+        session.dirty = isDirty;
+        session.selectedBinIndex = currentBinIndex;
+        session.selectedLevelIndex = currentLevelIndex;
+        synchronized (sessionCache) {
+            sessionCache.put(current.id, session);
+        }
+    }
+
+    private static boolean restoreSession(int dtbId) {
+        EditorSession session;
+        synchronized (sessionCache) {
+            session = sessionCache.get(dtbId);
+        }
+        if (session == null) {
+            return false;
+        }
+        lines_in_dts = session.linesInDts != null ? new ArrayList<>(session.linesInDts) : new ArrayList<>();
+        bins = cloneBinsList(session.binsSnapshot);
+        bin_position = session.binPosition;
+
+        undoStack.clear();
+        undoStack.addAll(cloneEditorStateDeque(session.undoStates));
+
+        redoStack.clear();
+        redoStack.addAll(cloneEditorStateDeque(session.redoStates));
+
+        changeHistory.clear();
+        if (session.history != null) {
+            changeHistory.addAll(session.history);
+        }
+
+        lastSavedSignature = session.savedSignature;
+        isDirty = session.dirty;
+        currentBinIndex = session.selectedBinIndex;
+        currentLevelIndex = session.selectedLevelIndex;
+        return true;
+    }
+
     private static void pushUndoState(EditorState state) {
         if (state == null) {
             return;
@@ -449,53 +560,65 @@ public class GpuTableEditor {
         if (saveButtonRef == null) {
             return;
         }
-        int backgroundAttr = isDirty
-                ? com.google.android.material.R.attr.colorErrorContainer
-                : com.google.android.material.R.attr.colorSecondaryContainer;
-        int foregroundAttr = isDirty
-                ? com.google.android.material.R.attr.colorOnErrorContainer
-                : com.google.android.material.R.attr.colorOnSecondaryContainer;
-        int rippleAttr = isDirty
-                ? com.google.android.material.R.attr.colorError
-                : com.google.android.material.R.attr.colorSecondary;
+        runOnMainThread(() -> {
+            if (saveButtonRef == null) {
+                return;
+            }
+            int backgroundAttr = isDirty
+                    ? com.google.android.material.R.attr.colorErrorContainer
+                    : com.google.android.material.R.attr.colorSecondaryContainer;
+            int foregroundAttr = isDirty
+                    ? com.google.android.material.R.attr.colorOnErrorContainer
+                    : com.google.android.material.R.attr.colorOnSecondaryContainer;
+            int rippleAttr = isDirty
+                    ? com.google.android.material.R.attr.colorError
+                    : com.google.android.material.R.attr.colorSecondary;
 
-        int background = MaterialColors.getColor(saveButtonRef, backgroundAttr);
-        int foreground = MaterialColors.getColor(saveButtonRef, foregroundAttr);
-        int ripple = MaterialColors.getColor(saveButtonRef, rippleAttr);
+            int background = MaterialColors.getColor(saveButtonRef, backgroundAttr);
+            int foreground = MaterialColors.getColor(saveButtonRef, foregroundAttr);
+            int ripple = MaterialColors.getColor(saveButtonRef, rippleAttr);
 
-        saveButtonRef.setBackgroundTintList(ColorStateList.valueOf(background));
-        saveButtonRef.setTextColor(foreground);
-        saveButtonRef.setIconTint(ColorStateList.valueOf(foreground));
-        saveButtonRef.setRippleColor(ColorStateList.valueOf(ripple));
+            saveButtonRef.setBackgroundTintList(ColorStateList.valueOf(background));
+            saveButtonRef.setTextColor(foreground);
+            saveButtonRef.setIconTint(ColorStateList.valueOf(foreground));
+            saveButtonRef.setRippleColor(ColorStateList.valueOf(ripple));
+        });
     }
 
     private static void updateUndoRedoButtons() {
-        if (undoButtonRef != null) {
-            boolean enabled = !undoStack.isEmpty();
-            undoButtonRef.setEnabled(enabled);
-            undoButtonRef.setAlpha(enabled ? 1f : 0.5f);
-        }
-        if (redoButtonRef != null) {
-            boolean enabled = !redoStack.isEmpty();
-            redoButtonRef.setEnabled(enabled);
-            redoButtonRef.setAlpha(enabled ? 1f : 0.5f);
-        }
+        runOnMainThread(() -> {
+            if (undoButtonRef != null) {
+                boolean enabled = !undoStack.isEmpty();
+                undoButtonRef.setEnabled(enabled);
+                undoButtonRef.setAlpha(enabled ? 1f : 0.5f);
+            }
+            if (redoButtonRef != null) {
+                boolean enabled = !redoStack.isEmpty();
+                redoButtonRef.setEnabled(enabled);
+                redoButtonRef.setAlpha(enabled ? 1f : 0.5f);
+            }
+        });
     }
 
     private static void updateHistoryButtonLabel() {
         if (historyButtonRef == null) {
             return;
         }
-        Activity activity = currentActivity;
-        if (activity == null) {
-            historyButtonRef.setText("History" + (changeHistory.isEmpty() ? "" : " (" + changeHistory.size() + ")"));
-            return;
-        }
-        if (changeHistory.isEmpty()) {
-            historyButtonRef.setText(activity.getString(R.string.history));
-        } else {
-            historyButtonRef.setText(activity.getString(R.string.history_with_count, changeHistory.size()));
-        }
+        runOnMainThread(() -> {
+            if (historyButtonRef == null) {
+                return;
+            }
+            Activity activity = currentActivity;
+            if (activity == null) {
+                historyButtonRef.setText("History" + (changeHistory.isEmpty() ? "" : " (" + changeHistory.size() + ")"));
+                return;
+            }
+            if (changeHistory.isEmpty()) {
+                historyButtonRef.setText(activity.getString(R.string.history));
+            } else {
+                historyButtonRef.setText(activity.getString(R.string.history_with_count, changeHistory.size()));
+            }
+        });
     }
 
     private static void addHistoryEntry(String description) {
@@ -595,9 +718,13 @@ public class GpuTableEditor {
         undoStack.clear();
         redoStack.clear();
         changeHistory.clear();
-        updateUndoRedoButtons();
-        updateHistoryButtonLabel();
-        markStateSaved();
+        lastSavedSignature = computeStateSignature();
+        isDirty = false;
+        runOnMainThread(() -> {
+            updateSaveButtonAppearance();
+            updateUndoRedoButtons();
+            updateHistoryButtonLabel();
+        });
     }
 
     private static void refreshCurrentView() {
@@ -719,10 +846,9 @@ public class GpuTableEditor {
                 true
         ));
 
-        // Group bus-max, bus-min, and bus-freq into modern stat cards
-        ArrayList<GpuParamDetailAdapter.StatItem> statsGroup = new ArrayList<>();
-        ArrayList<Integer> statsPositions = new ArrayList<>(); // Track positions for editing
-        ArrayList<GpuParamDetailAdapter.ParamDetailItem> otherParams = new ArrayList<>();
+    // Group bus-max, bus-min, and bus-freq into modern stat cards
+    ArrayList<GpuParamDetailAdapter.StatItem> statsGroup = new ArrayList<>();
+    ArrayList<GpuParamDetailAdapter.ParamDetailItem> otherParams = new ArrayList<>();
         
         int lineIndex = 0;
         for (String line : bins.get(last).levels.get(levelid).lines) {
@@ -749,9 +875,8 @@ public class GpuTableEditor {
                     paramValue,
                     paramName,
                     iconRes,
-                    lineIndex // Use lineIndex directly, not +1
+                    lineIndex
                 ));
-                statsPositions.add(lineIndex);
             } else {
                 // Other parameters use regular card layout
                 // Special handling for GPU frequency to make it clearer
@@ -760,12 +885,14 @@ public class GpuTableEditor {
                     displayTitle = "GPU Frequency";
                 }
                 
-                otherParams.add(new GpuParamDetailAdapter.ParamDetailItem(
+                GpuParamDetailAdapter.ParamDetailItem paramItem = new GpuParamDetailAdapter.ParamDetailItem(
                     displayTitle,
                     paramValue,
                     paramName,
                     iconRes
-                ));
+                );
+                paramItem.lineIndex = lineIndex;
+                otherParams.add(paramItem);
             }
             lineIndex++;
         }
@@ -781,57 +908,49 @@ public class GpuTableEditor {
         GpuParamDetailAdapter adapter = new GpuParamDetailAdapter(items, activity);
         adapter.setOnItemClickListener(new GpuParamDetailAdapter.OnItemClickListener() {
             @Override
-            public void onItemClick(int position) {
+            public void onBackClicked() {
                 try {
-                    // Handle back button
-                    if (position == 0) {
-                        generateLevels(activity, last, page);
+                    generateLevels(activity, last, page);
+                } catch (Exception e) {
+                    DialogUtil.showError(activity, R.string.error_occur);
+                }
+            }
+
+            @Override
+            public void onStatItemClicked(GpuParamDetailAdapter.StatItem statItem) {
+                if (statItem == null) {
+                    return;
+                }
+                try {
+                    int actualLineIndex = statItem.lineIndex;
+                    String line = bins.get(last).levels.get(levelid).lines.get(actualLineIndex);
+                    String raw_name = statItem.paramName;
+                    String raw_value = DtsHelper.shouldUseHex(line)
+                            ? DtsHelper.decode_hex_line(line).value
+                            : DtsHelper.decode_int_line(line).value + "";
+                    handleParameterEdit(activity, last, levelid, page, actualLineIndex, raw_name, raw_value, statItem.label);
+                } catch (Exception e) {
+                    DialogUtil.showError(activity, R.string.error_occur);
+                }
+            }
+
+            @Override
+            public void onParamClicked(GpuParamDetailAdapter.ParamDetailItem item) {
+                if (item == null || item.isStatsGroup) {
+                    return;
+                }
+                try {
+                    int actualLineIndex = item.lineIndex;
+                    if (actualLineIndex < 0 || actualLineIndex >= bins.get(last).levels.get(levelid).lines.size()) {
                         return;
                     }
-
-                    // For stat cards, position is already the correct lineIndex
-                    // For regular params after stats group, we need to calculate offset
-                    int actualLineIndex;
-                    
-                    // Check if this position is from a stat card (position < statsPositions.size())
-                    boolean isStatCard = false;
-                    for (int statPos : statsPositions) {
-                        if (position == statPos) {
-                            isStatCard = true;
-                            actualLineIndex = position;
-                            
-                            // Get parameter details
-                            String raw_name = DtsHelper.decode_hex_line(bins.get(last).levels.get(levelid).lines.get(actualLineIndex)).name;
-                            String raw_value = DtsHelper.shouldUseHex(bins.get(last).levels.get(levelid).lines.get(actualLineIndex))
-                                    ? DtsHelper.decode_hex_line(bins.get(last).levels.get(levelid).lines.get(actualLineIndex)).value
-                                    : DtsHelper.decode_int_line(bins.get(last).levels.get(levelid).lines.get(actualLineIndex)).value + "";
-                            
-                            String paramTitle = KonaBessStr.convert_level_params(raw_name, activity);
-                            handleParameterEdit(activity, last, levelid, page, actualLineIndex, raw_name, raw_value, paramTitle);
-                            return;
-                        }
-                    }
-                    
-                    // If not a stat card, handle as regular parameter
-                    if (!isStatCard) {
-                        // Position 1 is the stats group, positions after are regular params
-                        int offsetPosition = statsGroup.isEmpty() ? position - 1 : position - 2;
-                        if (offsetPosition < 0 || offsetPosition >= otherParams.size()) {
-                            return;
-                        }
-                        
-                        // Find the line index for this parameter
-                        actualLineIndex = statsPositions.size() + offsetPosition;
-
-                        // Get parameter details
-                        String raw_name = DtsHelper.decode_hex_line(bins.get(last).levels.get(levelid).lines.get(actualLineIndex)).name;
-                        String raw_value = DtsHelper.shouldUseHex(bins.get(last).levels.get(levelid).lines.get(actualLineIndex))
-                                ? DtsHelper.decode_hex_line(bins.get(last).levels.get(levelid).lines.get(actualLineIndex)).value
-                                : DtsHelper.decode_int_line(bins.get(last).levels.get(levelid).lines.get(actualLineIndex)).value + "";
-
-                        handleParameterEdit(activity, last, levelid, page, actualLineIndex, raw_name, raw_value, 
-                                          items.get(position).title);
-                    }
+                    String line = bins.get(last).levels.get(levelid).lines.get(actualLineIndex);
+                    String raw_name = item.paramName;
+                    String raw_value = DtsHelper.shouldUseHex(line)
+                            ? DtsHelper.decode_hex_line(line).value
+                            : DtsHelper.decode_int_line(line).value + "";
+                    String paramTitle = item.title;
+                    handleParameterEdit(activity, last, levelid, page, actualLineIndex, raw_name, raw_value, paramTitle);
                 } catch (Exception e) {
                     DialogUtil.showError(activity, R.string.error_occur);
                 }
@@ -1621,15 +1740,27 @@ public class GpuTableEditor {
         
         new Thread(() -> {
             try {
+                KonaBessCore.dtb previous = KonaBessCore.getCurrentDtb();
+                if (previous != null && previous.id != newDtb.id) {
+                    saveCurrentSession();
+                }
+
                 // Switch to new chipset
                 KonaBessCore.chooseTarget(newDtb, activity);
                 
-                // Reload GPU table for new chipset
-                init();
-                decode();
-                patch_throttle_level();
-                resetEditorState();
+                boolean restored = restoreSession(newDtb.id);
+                Integer targetBinIndex = restored ? currentBinIndex : null;
+                Integer targetLevelIndex = restored ? currentLevelIndex : null;
+                if (!restored) {
+                    // Reload GPU table for new chipset
+                    init();
+                    decode();
+                    patch_throttle_level();
+                    resetEditorState();
+                    saveCurrentSession();
+                }
                 
+                final boolean restoredSession = restored;
                 activity.runOnUiThread(() -> {
                     waiting.dismiss();
                     
@@ -1639,7 +1770,18 @@ public class GpuTableEditor {
                     
                     // Regenerate bins view
                     try {
+                        refreshDirtyStateFromSignature();
                         generateBins(activity, page);
+                        if (restoredSession && targetBinIndex != null) {
+                            try {
+                                if (targetLevelIndex != null) {
+                                    generateALevel(activity, targetBinIndex, targetLevelIndex, page);
+                                } else {
+                                    generateLevels(activity, targetBinIndex, page);
+                                }
+                            } catch (Exception ignored) {
+                            }
+                        }
                         Toast.makeText(activity, "Switched to chipset " + newDtb.id, 
                                 Toast.LENGTH_SHORT).show();
                     } catch (Exception e) {

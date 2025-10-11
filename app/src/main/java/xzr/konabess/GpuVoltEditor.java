@@ -49,14 +49,36 @@ public class GpuVoltEditor {
     private static int opp_position;
 
     public static void init() throws IOException {
-        lines_in_dts = new ArrayList<>();
-        opps = new ArrayList<>();
+        // Clear all static data to avoid conflicts when switching chipsets
+        if (lines_in_dts != null) {
+            lines_in_dts.clear();
+        } else {
+            lines_in_dts = new ArrayList<>();
+        }
+        
+        if (opps != null) {
+            opps.clear();
+        } else {
+            opps = new ArrayList<>();
+        }
+        
         opp_position = -1;
-        BufferedReader bufferedReader =
-                new BufferedReader(new FileReader(new File(KonaBessCore.dts_path)));
-        String s;
-        while ((s = bufferedReader.readLine()) != null) {
-            lines_in_dts.add(s);
+        
+        BufferedReader bufferedReader = null;
+        try {
+            bufferedReader = new BufferedReader(new FileReader(new File(KonaBessCore.dts_path)));
+            String s;
+            while ((s = bufferedReader.readLine()) != null) {
+                lines_in_dts.add(s);
+            }
+        } finally {
+            if (bufferedReader != null) {
+                try {
+                    bufferedReader.close();
+                } catch (IOException e) {
+                    // Ignore close errors
+                }
+            }
         }
     }
 

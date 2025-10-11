@@ -33,6 +33,7 @@ public class GpuParamDetailAdapter extends RecyclerView.Adapter<RecyclerView.Vie
         public boolean isBackButton;
         public boolean isStatsGroup;
         public List<StatItem> statItems; // For grouped stats
+        public int lineIndex = -1;
 
         public ParamDetailItem(String title, String value, String paramName, int iconRes) {
             this.title = title;
@@ -65,14 +66,14 @@ public class GpuParamDetailAdapter extends RecyclerView.Adapter<RecyclerView.Vie
         public String value;
         public String paramName;
         public int iconRes;
-        public int position; // Original position in data
+        public int lineIndex; // Original line index in data
 
-        public StatItem(String label, String value, String paramName, int iconRes, int position) {
+        public StatItem(String label, String value, String paramName, int iconRes, int lineIndex) {
             this.label = label;
             this.value = value;
             this.paramName = paramName;
             this.iconRes = iconRes;
-            this.position = position;
+            this.lineIndex = lineIndex;
         }
     }
 
@@ -81,7 +82,9 @@ public class GpuParamDetailAdapter extends RecyclerView.Adapter<RecyclerView.Vie
     private OnItemClickListener clickListener;
 
     public interface OnItemClickListener {
-        void onItemClick(int position);
+        void onBackClicked();
+        void onStatItemClicked(StatItem statItem);
+        void onParamClicked(ParamDetailItem item);
     }
 
     public GpuParamDetailAdapter(List<ParamDetailItem> items, Context context) {
@@ -130,7 +133,7 @@ public class GpuParamDetailAdapter extends RecyclerView.Adapter<RecyclerView.Vie
 
     private void bindStatsGroup(StatsGroupViewHolder holder, ParamDetailItem item) {
         // Clear previous stats
-        holder.statsRow.removeAllViews();
+    holder.statsRow.removeAllViews();
 
         // Add each stat card
         for (final StatItem stat : item.statItems) {
@@ -155,7 +158,7 @@ public class GpuParamDetailAdapter extends RecyclerView.Adapter<RecyclerView.Vie
                 @Override
                 public void onClick(View v) {
                     if (clickListener != null) {
-                        clickListener.onItemClick(stat.position);
+                        clickListener.onStatItemClicked(stat);
                     }
                 }
             });
@@ -207,8 +210,13 @@ public class GpuParamDetailAdapter extends RecyclerView.Adapter<RecyclerView.Vie
         holder.cardContent.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (clickListener != null) {
-                    clickListener.onItemClick(position);
+                if (clickListener == null) {
+                    return;
+                }
+                if (item.isBackButton) {
+                    clickListener.onBackClicked();
+                } else {
+                    clickListener.onParamClicked(item);
                 }
             }
         });
