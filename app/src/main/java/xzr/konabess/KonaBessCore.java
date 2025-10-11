@@ -13,13 +13,16 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
+import java.util.List;
 
 import xzr.konabess.utils.AssetsUtil;
+import xzr.konabess.utils.RootHelper;
 
 public class KonaBessCore {
     public static String dts_path;
     private static int dtb_num;
     public static String boot_name;
+    private static boolean prepared = false;
 
     private enum dtb_types {
         dtb,
@@ -30,17 +33,13 @@ public class KonaBessCore {
     private static dtb_types dtb_type;
 
     public static void cleanEnv(Context context) throws IOException {
-        Process process = new ProcessBuilder("sh").start();
-        BufferedReader bufferedReader =
-                new BufferedReader(new InputStreamReader(process.getInputStream()));
-        OutputStreamWriter outputStreamWriter = new OutputStreamWriter(process.getOutputStream());
-        outputStreamWriter.write("rm -rf " + context.getFilesDir().getAbsolutePath() + "/*\nexit" +
-                "\n");
-        outputStreamWriter.flush();
-        while (bufferedReader.readLine() != null) {
+        prepared = false;
+        dts_path = null;
+        dtbs = null;
+        boot_name = null;
+        if (!RootHelper.execShForOutput("rm -rf " + context.getFilesDir().getAbsolutePath() + "/*").isEmpty()) {
+            // Command executed successfully (output doesn't matter)
         }
-        bufferedReader.close();
-        process.destroy();
     }
 
     private static String[] fileList = {"dtc", "magiskboot"};
@@ -56,18 +55,9 @@ public class KonaBessCore {
     }
 
     public static void reboot() throws IOException {
-        Process process = new ProcessBuilder("su").redirectErrorStream(true).start();
-        OutputStreamWriter outputStreamWriter = new OutputStreamWriter((process.getOutputStream()));
-        BufferedReader bufferedReader =
-                new BufferedReader(new InputStreamReader(process.getInputStream()));
-        outputStreamWriter.write("svc power reboot\n");
-        outputStreamWriter.write("exit\n");
-        outputStreamWriter.flush();
-        while (bufferedReader.readLine() != null) {
+        if (!RootHelper.execAndCheck("svc power reboot")) {
+            throw new IOException("Failed to reboot");
         }
-        outputStreamWriter.close();
-        bufferedReader.close();
-        process.destroy();
     }
 
     static String getCurrent(String name) {
@@ -108,22 +98,14 @@ public class KonaBessCore {
     }
 
     private static void getRealBootImage(Context context) throws IOException {
-        Process process = new ProcessBuilder("su").redirectErrorStream(true).start();
-        OutputStreamWriter outputStreamWriter = new OutputStreamWriter((process.getOutputStream()));
-        BufferedReader bufferedReader =
-                new BufferedReader(new InputStreamReader(process.getInputStream()));
-        outputStreamWriter.write("dd if=/dev/block/bootdevice/by-name/boot" + getCurrent("slot") + " of=" + context.getFilesDir().getAbsolutePath() + "/boot.img\n");
-        outputStreamWriter.write("chmod 644 " + context.getFilesDir().getAbsolutePath() + "/boot" +
-                ".img\n");
-        outputStreamWriter.write("exit\n");
-        outputStreamWriter.flush();
-        while (bufferedReader.readLine() != null) {
+        String bootImgPath = context.getFilesDir().getAbsolutePath() + "/boot.img";
+        if (!RootHelper.execAndCheck(
+                "dd if=/dev/block/bootdevice/by-name/boot" + getCurrent("slot") + " of=" + bootImgPath,
+                "chmod 644 " + bootImgPath)) {
+            throw new IOException("Failed to get boot image");
         }
-        outputStreamWriter.close();
-        bufferedReader.close();
-        process.destroy();
 
-        File target = new File(context.getFilesDir().getAbsolutePath() + "/boot.img");
+        File target = new File(bootImgPath);
         if (!target.exists() || !target.canRead()) {
             target.delete();
             throw new IOException();
@@ -131,23 +113,14 @@ public class KonaBessCore {
     }
 
     private static void getVendorBootImage(Context context) throws IOException {
-        Process process = new ProcessBuilder("su").redirectErrorStream(true).start();
-        OutputStreamWriter outputStreamWriter = new OutputStreamWriter((process.getOutputStream()));
-        BufferedReader bufferedReader =
-                new BufferedReader(new InputStreamReader(process.getInputStream()));
-        outputStreamWriter.write("dd if=/dev/block/bootdevice/by-name/vendor_boot" + getCurrent(
-                "slot") + " of=" + context.getFilesDir().getAbsolutePath() + "/boot.img\n");
-        outputStreamWriter.write("chmod 644 " + context.getFilesDir().getAbsolutePath() + "/boot" +
-                ".img\n");
-        outputStreamWriter.write("exit\n");
-        outputStreamWriter.flush();
-        while (bufferedReader.readLine() != null) {
+        String bootImgPath = context.getFilesDir().getAbsolutePath() + "/boot.img";
+        if (!RootHelper.execAndCheck(
+                "dd if=/dev/block/bootdevice/by-name/vendor_boot" + getCurrent("slot") + " of=" + bootImgPath,
+                "chmod 644 " + bootImgPath)) {
+            throw new IOException("Failed to get vendor boot image");
         }
-        outputStreamWriter.close();
-        bufferedReader.close();
-        process.destroy();
 
-        File target = new File(context.getFilesDir().getAbsolutePath() + "/boot.img");
+        File target = new File(bootImgPath);
         if (!target.exists() || !target.canRead()) {
             target.delete();
             throw new IOException();
@@ -155,35 +128,17 @@ public class KonaBessCore {
     }
 
     public static void writeBootImage(Context context) throws IOException {
-        Process process = new ProcessBuilder("su").redirectErrorStream(true).start();
-        OutputStreamWriter outputStreamWriter = new OutputStreamWriter((process.getOutputStream()));
-        BufferedReader bufferedReader =
-                new BufferedReader(new InputStreamReader(process.getInputStream()));
-        outputStreamWriter.write("dd if=" + context.getFilesDir().getAbsolutePath() + "/boot_new" +
-                ".img of=/dev/block/bootdevice/by-name/" + boot_name + getCurrent("slot") + "\n");
-        outputStreamWriter.write("exit\n");
-        outputStreamWriter.flush();
-        while (bufferedReader.readLine() != null) {
+        if (!RootHelper.execAndCheck(
+                "dd if=" + context.getFilesDir().getAbsolutePath() + "/boot_new.img of=/dev/block/bootdevice/by-name/" + boot_name + getCurrent("slot"))) {
+            throw new IOException("Failed to write boot image");
         }
-        outputStreamWriter.close();
-        bufferedReader.close();
-        process.destroy();
     }
 
     public static void backupBootImage(Context context) throws IOException {
-        Process process = new ProcessBuilder("sh").redirectErrorStream(true).start();
-        OutputStreamWriter outputStreamWriter = new OutputStreamWriter((process.getOutputStream()));
-        BufferedReader bufferedReader =
-                new BufferedReader(new InputStreamReader(process.getInputStream()));
-        outputStreamWriter.write("cp -f " + context.getFilesDir().getAbsolutePath() + "/boot.img "
-                + Environment.getExternalStorageDirectory().getAbsolutePath() + "/" + boot_name + ".img\n");
-        outputStreamWriter.write("exit\n");
-        outputStreamWriter.flush();
-        while (bufferedReader.readLine() != null) {
+        if (!RootHelper.execShForOutput("cp -f " + context.getFilesDir().getAbsolutePath() + "/boot.img " +
+                Environment.getExternalStorageDirectory().getAbsolutePath() + "/" + boot_name + ".img").isEmpty()) {
+            // Backup executed successfully
         }
-        outputStreamWriter.close();
-        bufferedReader.close();
-        process.destroy();
     }
 
     static class dtb {
@@ -192,6 +147,11 @@ public class KonaBessCore {
     }
 
     public static ArrayList<dtb> dtbs;
+    private static dtb currentDtb;
+
+    public static dtb getCurrentDtb() {
+        return currentDtb;
+    }
 
     public static void checkDevice(Context context) throws IOException {
         dtbs = new ArrayList<>();
@@ -321,62 +281,32 @@ public class KonaBessCore {
     public static void chooseTarget(dtb dtb, Activity activity) {
         dts_path = activity.getFilesDir().getAbsolutePath() + "/" + dtb.id + ".dts";
         ChipInfo.which = dtb.type;
+        currentDtb = dtb;
+        prepared = true;
+    }
+
+    public static boolean isPrepared() {
+        return prepared && dts_path != null && new File(dts_path).exists()
+                && ChipInfo.which != ChipInfo.type.unknown;
     }
 
     private static boolean checkSingleBin(Context context, int index) throws IOException {
-        Process process = new ProcessBuilder("sh").start();
-        OutputStreamWriter outputStreamWriter = new OutputStreamWriter((process.getOutputStream()));
-        BufferedReader bufferedReader =
-                new BufferedReader(new InputStreamReader(process.getInputStream()));
-        outputStreamWriter.write("cat " + context.getFilesDir().getAbsolutePath() + "/" + index + ".dts | grep 'qcom,gpu-pwrlevels {'\n");
-        outputStreamWriter.write("exit\n");
-        outputStreamWriter.flush();
-        boolean is = false;
-        String s = bufferedReader.readLine();
-        if (s != null)
-            is = true;
-        outputStreamWriter.close();
-        bufferedReader.close();
-        process.destroy();
-        return is;
+        List<String> output = RootHelper.execShForOutput(
+                "cat " + context.getFilesDir().getAbsolutePath() + "/" + index + ".dts | grep 'qcom,gpu-pwrlevels {'");
+        return !output.isEmpty();
     }
 
     private static boolean checkChip(Context context, int index, String chip) throws IOException {
-        boolean result = false;
-        Process process = new ProcessBuilder("sh").start();
-        OutputStreamWriter outputStreamWriter = new OutputStreamWriter((process.getOutputStream()));
-        BufferedReader bufferedReader =
-                new BufferedReader(new InputStreamReader(process.getInputStream()));
-        outputStreamWriter.write("cat " + context.getFilesDir().getAbsolutePath() + "/" + index + ".dts | grep model | grep '" + chip + "'\n");
-        outputStreamWriter.write("exit\n");
-        outputStreamWriter.flush();
-        String s = bufferedReader.readLine();
-        if (s != null)
-            result = true;
-        outputStreamWriter.close();
-        bufferedReader.close();
-        process.destroy();
-        return result;
+        List<String> output = RootHelper.execShForOutput(
+                "cat " + context.getFilesDir().getAbsolutePath() + "/" + index + ".dts | grep model | grep '" + chip + "'");
+        return !output.isEmpty();
     }
 
     private static void unpackBootImage(Context context) throws IOException {
-        Process process = new ProcessBuilder("sh").redirectErrorStream(true).start();
-        OutputStreamWriter outputStreamWriter = new OutputStreamWriter(process.getOutputStream());
-        BufferedReader bufferedReader =
-                new BufferedReader((new InputStreamReader(process.getInputStream())));
-        outputStreamWriter.write("cd " + context.getFilesDir().getAbsolutePath() + "\n");
-        outputStreamWriter.write("./magiskboot unpack boot.img\n");
-        outputStreamWriter.write("exit\n");
-        outputStreamWriter.flush();
-        StringBuilder log = new StringBuilder();
-        String s;
-        while ((s = bufferedReader.readLine()) != null) {
-            log.append(s).append("\n");
-        }
-        bufferedReader.close();
-        outputStreamWriter.close();
-        process.destroy();
-
+        List<String> output = RootHelper.execShForOutput(
+                "cd " + context.getFilesDir().getAbsolutePath(),
+                "./magiskboot unpack boot.img");
+        
         File kdtb_file = new File(context.getFilesDir().getAbsolutePath() + "/kernel_dtb");
         File dtb_file = new File(context.getFilesDir().getAbsolutePath() + "/dtb");
 
@@ -395,29 +325,23 @@ public class KonaBessCore {
             return;
         }
 
-        throw new IOException();
+        throw new IOException("Failed to unpack boot image");
     }
 
     private static void dtb2dts(Context context, int index) throws IOException {
-        Process process = new ProcessBuilder("sh").redirectErrorStream(true).start();
-        OutputStreamWriter outputStreamWriter = new OutputStreamWriter(process.getOutputStream());
-        BufferedReader bufferedReader =
-                new BufferedReader((new InputStreamReader(process.getInputStream())));
-        outputStreamWriter.write("cd " + context.getFilesDir().getAbsolutePath() + "\n");
-        outputStreamWriter.write("./dtc -I dtb -O dts " + index + ".dtb -o " + index + ".dts\n");
-        outputStreamWriter.write("rm -f " + index + ".dtb\n");
-        outputStreamWriter.write("exit\n");
-        outputStreamWriter.flush();
-        StringBuilder log = new StringBuilder();
-        String s;
-        while ((s = bufferedReader.readLine()) != null) {
-            log.append(s).append("\n");
-        }
-        bufferedReader.close();
-        outputStreamWriter.close();
-        process.destroy();
-        if (!new File(context.getFilesDir().getAbsolutePath() + "/" + index + ".dts").exists())
+        String filesDir = context.getFilesDir().getAbsolutePath();
+        List<String> output = RootHelper.execShForOutput(
+                "cd " + filesDir,
+                "./dtc -I dtb -O dts " + index + ".dtb -o " + index + ".dts",
+                "rm -f " + index + ".dtb");
+        
+        if (!new File(filesDir + "/" + index + ".dts").exists()) {
+            StringBuilder log = new StringBuilder();
+            for (String line : output) {
+                log.append(line).append("\n");
+            }
             throw new IOException(log.toString());
+        }
     }
 
     public static void bootImage2dts(Context context) throws IOException {
@@ -488,48 +412,39 @@ public class KonaBessCore {
     }
 
     private static void dts2dtb(Context context, int index) throws IOException {
-        Process process = new ProcessBuilder("sh").redirectErrorStream(true).start();
-        OutputStreamWriter outputStreamWriter = new OutputStreamWriter(process.getOutputStream());
-        BufferedReader bufferedReader =
-                new BufferedReader((new InputStreamReader(process.getInputStream())));
-        outputStreamWriter.write("cd " + context.getFilesDir().getAbsolutePath() + "\n");
-        outputStreamWriter.write("./dtc -I dts -O dtb " + index + ".dts -o " + index + ".dtb\n");
-        outputStreamWriter.write("exit\n");
-        outputStreamWriter.flush();
-        StringBuilder log = new StringBuilder();
-        String s;
-        while ((s = bufferedReader.readLine()) != null) {
-            log.append(s).append("\n");
-        }
-        bufferedReader.close();
-        outputStreamWriter.close();
-        process.destroy();
-        if (!new File(context.getFilesDir().getAbsolutePath() + "/" + index + ".dtb").exists())
+        String filesDir = context.getFilesDir().getAbsolutePath();
+        List<String> output = RootHelper.execShForOutput(
+                "cd " + filesDir,
+                "./dtc -I dts -O dtb " + index + ".dts -o " + index + ".dtb");
+        
+        if (!new File(filesDir + "/" + index + ".dtb").exists()) {
+            StringBuilder log = new StringBuilder();
+            for (String line : output) {
+                log.append(line).append("\n");
+            }
             throw new IOException(log.toString());
+        }
     }
 
 
     private static void dtb2bootImage(Context context) throws IOException {
-        Process process = new ProcessBuilder("sh").redirectErrorStream(true).start();
-        OutputStreamWriter outputStreamWriter = new OutputStreamWriter(process.getOutputStream());
-        BufferedReader bufferedReader =
-                new BufferedReader((new InputStreamReader(process.getInputStream())));
-        outputStreamWriter.write("cd " + context.getFilesDir().getAbsolutePath() + "\n");
-        if (dtb_type == dtb_types.both)
-            outputStreamWriter.write("cp dtb kernel_dtb\n");
-        outputStreamWriter.write("./magiskboot repack boot.img boot_new.img\n");
-        outputStreamWriter.write("exit\n");
-        outputStreamWriter.flush();
-        StringBuilder log = new StringBuilder();
-        String s;
-        while ((s = bufferedReader.readLine()) != null) {
-            log.append(s).append("\n");
+        String filesDir = context.getFilesDir().getAbsolutePath();
+        List<String> commands = new ArrayList<>();
+        commands.add("cd " + filesDir);
+        if (dtb_type == dtb_types.both) {
+            commands.add("cp dtb kernel_dtb");
         }
-        bufferedReader.close();
-        outputStreamWriter.close();
-        process.destroy();
-        if (!new File(context.getFilesDir().getAbsolutePath() + "/boot_new.img").exists())
+        commands.add("./magiskboot repack boot.img boot_new.img");
+        
+        List<String> output = RootHelper.execShForOutput(commands.toArray(new String[0]));
+        
+        if (!new File(filesDir + "/boot_new.img").exists()) {
+            StringBuilder log = new StringBuilder();
+            for (String line : output) {
+                log.append(line).append("\n");
+            }
             throw new IOException(log.toString());
+        }
     }
 
     public static void linkDtbs(Context context) throws IOException {

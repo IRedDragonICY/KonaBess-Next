@@ -3,37 +3,79 @@ package xzr.konabess;
 import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
-import android.widget.Button;
-import android.widget.HorizontalScrollView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
+import androidx.fragment.app.Fragment;
+import androidx.viewpager2.widget.ViewPager2;
+
+import com.google.android.material.appbar.MaterialToolbar;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
+
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import xzr.konabess.adapters.ParamAdapter;
+import xzr.konabess.adapters.ViewPagerAdapter;
+import xzr.konabess.fragments.GpuFrequencyFragment;
+import xzr.konabess.fragments.ImportExportFragment;
+import xzr.konabess.fragments.SettingsFragment;
 import xzr.konabess.utils.DialogUtil;
+import xzr.konabess.utils.LocaleUtil;
 
-public class MainActivity extends Activity {
+public class MainActivity extends AppCompatActivity {
+    private static final String KEY_LAST_GPU_TITLE = "key_last_gpu_toolbar_title";
+    private static final String KEY_CURRENT_TITLE = "key_current_toolbar_title";
+
     AlertDialog waiting;
     boolean cross_device_debug = false;
     onBackPressedListener onBackPressedListener = null;
+    
+    private ViewPager2 viewPager;
+    private BottomNavigationView bottomNav;
+    private MaterialToolbar toolbar;
+    private boolean isPageChangeFromUser = true;
+    private String currentTitle;
+    private String lastGpuToolbarTitle;
+
+    @Override
+    protected void attachBaseContext(Context newBase) {
+        super.attachBaseContext(LocaleUtil.wrap(newBase));
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        // Apply color palette theme BEFORE super.onCreate()
+        applyColorPalette();
         super.onCreate(savedInstanceState);
 
-        ChipInfo.which = ChipInfo.type.unknown;
-
         try {
-            setTitle(getTitle() + " " + getPackageManager().getPackageInfo(getPackageName(), 0).versionName);
+            setTitle(getString(R.string.app_name) + " " +
+                    getPackageManager().getPackageInfo(getPackageName(), 0).versionName);
         } catch (PackageManager.NameNotFoundException ignored) {
         }
+
+        if (savedInstanceState != null) {
+            lastGpuToolbarTitle = savedInstanceState.getString(KEY_LAST_GPU_TITLE);
+            currentTitle = savedInstanceState.getString(KEY_CURRENT_TITLE);
+        }
+
+        if (KonaBessCore.isPrepared()) {
+            showMainView();
+            return;
+        }
+
+        ChipInfo.which = ChipInfo.type.unknown;
 
         try {
             if (!cross_device_debug)
@@ -113,73 +155,120 @@ public class MainActivity extends Activity {
 
     void showMainView() {
         onBackPressedListener = null;
-        mainView = new LinearLayout(this);
-        mainView.setOrientation(LinearLayout.VERTICAL);
-        setContentView(mainView);
+        setContentView(R.layout.activity_main);
 
-        LinearLayout toolbar = new LinearLayout(this);
-        HorizontalScrollView toolbarScroll = new HorizontalScrollView(this);
-        toolbarScroll.addView(toolbar);
-        mainView.addView(toolbarScroll);
+        toolbar = findViewById(R.id.toolbar);
+        if (lastGpuToolbarTitle == null) {
+            lastGpuToolbarTitle = getDefaultGpuToolbarTitle();
+        }
+        if (currentTitle == null) {
+            currentTitle = lastGpuToolbarTitle;
+        }
+        updateToolbarTitle(currentTitle);
+        viewPager = findViewById(R.id.view_pager);
+        bottomNav = findViewById(R.id.bottom_navigation);
 
-        LinearLayout editor = new LinearLayout(this);
-        HorizontalScrollView editorScroll = new HorizontalScrollView(this);
-        editorScroll.addView(editor);
-        mainView.addView(editorScroll);
+        setupViewPager();
+        setupBottomNavigation();
+    }
 
-        showdView = new LinearLayout(this);
-        showdView.setOrientation(LinearLayout.VERTICAL);
-        mainView.addView(showdView);
+    private void setupViewPager() {
+        ArrayList<Fragment> fragments = new ArrayList<>(Arrays.asList(
+            new GpuFrequencyFragment(),
+            new ImportExportFragment(),
+            new SettingsFragment()
+        ));
 
-        //ToolBar
-        {
-            Button button = new Button(this);
-            button.setText(R.string.repack_and_flash);
-            toolbar.addView(button);
-            button.setOnClickListener(v -> new repackLogic().start());
-        }
-        {
-            Button button = new Button(this);
-            button.setText(R.string.backup_old_image);
-            toolbar.addView(button);
-            button.setOnClickListener(v -> new AlertDialog.Builder(this)
-                    .setTitle(R.string.backup_old_image)
-                    .setMessage(getResources().getString(R.string.will_backup_to) + " /sdcard/" + KonaBessCore.boot_name + ".img")
-                    .setPositiveButton(R.string.ok, (dialog, which) -> {
-                        runWithStoragePermission(this, new backupBoot(this));
-                    })
-                    .setNegativeButton(R.string.cancel, null)
-                    .create().show());
-        }
-        {
-            Button button = new Button(this);
-            button.setText(R.string.settings);
-            toolbar.addView(button);
-            button.setOnClickListener(v -> startActivity(new Intent(MainActivity.this, SettingsActivity.class)));
-        }
+        ViewPagerAdapter adapter = new ViewPagerAdapter(this, fragments);
+        viewPager.setAdapter(adapter);
 
-        //Editor
-        {
-            Button button = new Button(this);
-            button.setText(R.string.edit_gpu_freq_table);
-            editor.addView(button);
-            button.setOnClickListener(v -> new GpuTableEditor.gpuTableLogic(this, showdView).start());
-        }
-        if (!ChipInfo.shouldIgnoreVoltTable(ChipInfo.which)) {
-            Button button = new Button(this);
-            button.setText(R.string.edit_gpu_volt_table);
-            editor.addView(button);
-            button.setOnClickListener(v -> new GpuVoltEditor.gpuVoltLogic(this, showdView).start());
-        }
-        {
-            Button button = new Button(this);
-            button.setText(R.string.import_export);
-            editor.addView(button);
-            button.setOnClickListener(v -> new TableIO.TableIOLogic(this, showdView).start());
+        // Sync ViewPager with BottomNavigation
+        viewPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
+            @Override
+            public void onPageSelected(int position) {
+                super.onPageSelected(position);
+                onBackPressedListener = null;
+                if (isPageChangeFromUser) {
+                    switch (position) {
+                        case 0:
+                            restoreGpuToolbarTitle();
+                            bottomNav.setSelectedItemId(R.id.nav_edit_freq);
+                            break;
+                        case 1:
+                            updateToolbarTitle(getString(R.string.import_export));
+                            bottomNav.setSelectedItemId(R.id.nav_import_export);
+                            break;
+                        case 2:
+                            updateToolbarTitle(getString(R.string.settings));
+                            bottomNav.setSelectedItemId(R.id.nav_settings);
+                            break;
+                    }
+                }
+            }
+        });
+
+        // Start with GPU Frequency section
+        restoreGpuToolbarTitle();
+    }
+
+    private void setupBottomNavigation() {
+        bottomNav.setOnItemSelectedListener(item -> {
+            isPageChangeFromUser = false;
+            int itemId = item.getItemId();
+            if (itemId == R.id.nav_edit_freq) {
+                viewPager.setCurrentItem(0, true);
+                restoreGpuToolbarTitle();
+            } else if (itemId == R.id.nav_import_export) {
+                viewPager.setCurrentItem(1, true);
+                updateToolbarTitle(getString(R.string.import_export));
+            } else if (itemId == R.id.nav_settings) {
+                viewPager.setCurrentItem(2, true);
+                updateToolbarTitle(getString(R.string.settings));
+            }
+            isPageChangeFromUser = true;
+            return true;
+        });
+    }
+
+    private void hideMainView() {
+        // Handled by back navigation now
+    }
+
+    @Override
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putString(KEY_LAST_GPU_TITLE, lastGpuToolbarTitle);
+        outState.putString(KEY_CURRENT_TITLE, currentTitle);
+    }
+
+    public void updateToolbarTitle(String title) {
+        currentTitle = title;
+        if (toolbar != null) {
+            toolbar.setTitle(title);
         }
     }
 
-    class backupBoot extends Thread {
+    private String getDefaultGpuToolbarTitle() {
+        return getString(R.string.edit_freq_table);
+    }
+
+    public void updateGpuToolbarTitle(String title) {
+        lastGpuToolbarTitle = title;
+        updateToolbarTitle(title);
+    }
+
+    public void restoreGpuToolbarTitle() {
+        if (lastGpuToolbarTitle == null) {
+            lastGpuToolbarTitle = getDefaultGpuToolbarTitle();
+        }
+        updateToolbarTitle(lastGpuToolbarTitle);
+    }
+
+    public String getCurrentToolbarTitle() {
+        return currentTitle;
+    }
+
+    public class backupBoot extends Thread {
         Activity activity;
         AlertDialog waiting;
         boolean is_err;
@@ -211,7 +300,7 @@ public class MainActivity extends Activity {
     }
 
 
-    class repackLogic extends Thread {
+    public class repackLogic extends Thread {
         boolean is_err;
         String error = "";
 
@@ -379,6 +468,32 @@ public class MainActivity extends Activity {
                     showMainView();
                 });
             });
+        }
+    }
+
+    private void applyColorPalette() {
+        android.content.SharedPreferences prefs = getSharedPreferences("KonaBessSettings", Context.MODE_PRIVATE);
+        int palette = prefs.getInt("color_palette", 0);
+        
+        switch (palette) {
+            case 1: // Purple & Teal
+                setTheme(R.style.Theme_KonaBess_Purple);
+                break;
+            case 2: // Blue & Orange
+                setTheme(R.style.Theme_KonaBess_Blue);
+                break;
+            case 3: // Green & Red
+                setTheme(R.style.Theme_KonaBess_Green);
+                break;
+            case 4: // Pink & Cyan
+                setTheme(R.style.Theme_KonaBess_Pink);
+                break;
+            case 5: // Pure AMOLED
+                setTheme(R.style.Theme_KonaBess_AMOLED);
+                break;
+            default: // Dynamic (Material You)
+                setTheme(R.style.Theme_KonaBess);
+                break;
         }
     }
 

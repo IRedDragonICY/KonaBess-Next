@@ -146,13 +146,41 @@ public class GpuVoltEditor {
 
     public static void writeOut(List<String> new_dts) throws IOException {
         File file = new File(KonaBessCore.dts_path);
-        file.createNewFile();
-        BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(file));
-        for (String s : new_dts) {
-            bufferedWriter.write(s);
-            bufferedWriter.newLine();
+        
+        // If file exists, delete it first to avoid permission issues
+        if (file.exists()) {
+            if (!file.delete()) {
+                // If can't delete, try to set writable first
+                file.setWritable(true);
+                file.delete();
+            }
         }
-        bufferedWriter.close();
+        
+        // Create new file
+        if (!file.createNewFile()) {
+            throw new IOException("Failed to create file: " + file.getAbsolutePath());
+        }
+        
+        // Set proper permissions
+        file.setReadable(true, false);
+        file.setWritable(true, false);
+        
+        BufferedWriter bufferedWriter = null;
+        try {
+            bufferedWriter = new BufferedWriter(new FileWriter(file));
+            for (String s : new_dts) {
+                bufferedWriter.write(s);
+                bufferedWriter.newLine();
+            }
+        } finally {
+            if (bufferedWriter != null) {
+                try {
+                    bufferedWriter.close();
+                } catch (IOException e) {
+                    // Ignore close errors
+                }
+            }
+        }
     }
 
     private static View generateToolBar(Activity activity) {
@@ -338,7 +366,7 @@ public class GpuVoltEditor {
         page.addView(listView);
     }
 
-    static class gpuVoltLogic extends Thread {
+    public static class gpuVoltLogic extends Thread {
         Activity activity;
         AlertDialog waiting;
         LinearLayout showedView;

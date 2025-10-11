@@ -63,7 +63,12 @@
     <string name="lito_v2_series">Snapdragon 765 v2 Serie</string>
     <string name="long_press_to_copy">( Langes Drücken zum Kopieren )</string>
     <string name="new_desc">Neue Frequenz hinzufügen</string>
+    <string name="add_freq_top">Frequenz oben hinzufügen</string>
+    <string name="add_freq_top_desc">Ersten Eintrag duplizieren und oben einfügen</string>
+    <string name="add_freq_bottom">Frequenz unten hinzufügen</string>
+    <string name="add_freq_bottom_desc">Letzten Eintrag duplizieren und unten anhängen</string>
     <string name="new_desc_volt">Neuen Spannungspegel hinzufügen</string>
+    <string name="duplicate_frequency">Diese Frequenz duplizieren</string>
     <string name="new_item">Neu</string>
     <string name="no">Nein</string>
     <string name="ok">Ok</string>

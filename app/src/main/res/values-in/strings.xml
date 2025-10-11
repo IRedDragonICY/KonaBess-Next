@@ -46,7 +46,11 @@
     <string name="unable_add_more">Tidak dapat menambah frekuensi lagi</string>
     <string name="new_item">Baru</string>
     <string name="new_desc">Tambah frekuensi baru</string>
+    <string name="add_freq_top">Tambah frekuensi di atas</string>
+    <string name="add_freq_top_desc">Duplikat entri pertama untuk menambahkannya di awal</string>
+    <string name="add_freq_bottom">Tambah frekuensi di bawah</string>
     <string name="new_desc_volt">Tambah level voltase baru</string>
+    <string name="duplicate_frequency">Duplikat frekuensi ini</string>
     <string name="remove">Hapus</string>
     <string name="remove_msg">Apakah Anda yakin ingin menghapus %d MHz?</string>
     <string name="remove_msg_volt">Apakah Anda yakin ingin menghapus level voltase dari %d MHz?</string>

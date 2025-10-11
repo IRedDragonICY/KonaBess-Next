@@ -45,7 +45,11 @@
     <string name="unable_add_more">不能再增加更多频率了</string>
     <string name="new_item">新建</string>
     <string name="new_desc">增加新的频率</string>
+    <string name="add_freq_top">在顶部新增频率</string>
+    <string name="add_freq_top_desc">复制首个条目并插入到开头</string>
+    <string name="add_freq_bottom">在底部新增频率</string>
     <string name="new_desc_volt">增加新的电压等级</string>
+    <string name="duplicate_frequency">复制此频率</string>
     <string name="remove">删除</string>
     <string name="remove_msg">你确认要删除%dMhz吗？</string>
     <string name="remove_msg_volt">你确认要删除%dMhz对应的电压吗？</string>

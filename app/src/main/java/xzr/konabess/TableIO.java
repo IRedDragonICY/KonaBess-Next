@@ -2,10 +2,10 @@ package xzr.konabess;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.os.Environment;
 import android.widget.EditText;
 import android.widget.LinearLayout;
-import android.widget.ListView;
 import android.widget.Toast;
 
 import org.json.JSONException;
@@ -23,11 +23,16 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 
-import xzr.konabess.adapters.ParamAdapter;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import xzr.konabess.adapters.ActionCardAdapter;
 import xzr.konabess.utils.DialogUtil;
 import xzr.konabess.utils.GzipUtils;
 
 public class TableIO {
+    
+    @SuppressWarnings("unused")
     private static class json_keys {
         public static final String MODEL = "model";
         public static final String BRAND = "brand";
@@ -46,9 +51,19 @@ public class TableIO {
 
     private static AlertDialog waiting_import;
 
+    private static synchronized void prepareTables() throws Exception {
+        GpuTableEditor.init();
+        GpuTableEditor.decode();
+        if (!ChipInfo.shouldIgnoreVoltTable(ChipInfo.which)) {
+            GpuVoltEditor.init();
+            GpuVoltEditor.decode();
+        }
+    }
+
     private static boolean decodeAndWriteData(JSONObject jsonObject) throws Exception {
         if (!ChipInfo.checkChipGeneral(ChipInfo.type.valueOf(jsonObject.getString(json_keys.CHIP))))
             return true;
+        prepareTables();
         ArrayList<String> freq =
                 new ArrayList<>(Arrays.asList(jsonObject.getString(json_keys.FREQ).split("\n")));
         GpuTableEditor.writeOut(GpuTableEditor.genBack(freq));
@@ -81,6 +96,7 @@ public class TableIO {
     private static String getConfig(String desc) throws IOException {
         JSONObject jsonObject = new JSONObject();
         try {
+            prepareTables();
             /*jsonObject.put(json_keys.MODEL, getCurrent("model"));
             jsonObject.put(json_keys.BRAND, getCurrent("brand"));
             jsonObject.put(json_keys.ID, getCurrent("id"));
@@ -90,13 +106,15 @@ public class TableIO {
             jsonObject.put(json_keys.DEVICE, getCurrent("device"));
             jsonObject.put(json_keys.NAME, getCurrent("name"));
             jsonObject.put(json_keys.BOARD, getCurrent("board"));*/
-            jsonObject.put(json_keys.CHIP, ChipInfo.which);
+            jsonObject.put(json_keys.CHIP, ChipInfo.which.name());
             jsonObject.put(json_keys.DESCRIPTION, desc);
             jsonObject.put(json_keys.FREQ, getFreqData());
             if (!ChipInfo.shouldIgnoreVoltTable(ChipInfo.which))
                 jsonObject.put(json_keys.VOLT, getVoltData());
         } catch (JSONException e) {
             e.printStackTrace();
+        } catch (Exception e) {
+            throw new IOException("Failed to prepare configuration", e);
         }
         return GzipUtils.compress(jsonObject.toString().getBytes(StandardCharsets.UTF_8));
     }
@@ -105,14 +123,17 @@ public class TableIO {
         EditText editText = new EditText(activity);
         editText.setHint(activity.getResources().getString(R.string.paste_here));
 
-        new AlertDialog.Builder(activity)
-                .setTitle(R.string.import_data)
-                .setView(editText)
-                .setPositiveButton(R.string.confirm,
-                        (dialog, which) -> new showDecodeDialog(activity,
-                                editText.getText().toString()).start())
-                .setNegativeButton(R.string.cancel, null)
-                .create().show();
+    new AlertDialog.Builder(activity)
+        .setTitle(R.string.import_data)
+        .setView(editText)
+        .setPositiveButton(R.string.confirm, (dialog, which) -> {
+            if (which == DialogInterface.BUTTON_POSITIVE) {
+            dialog.dismiss();
+            new showDecodeDialog(activity, editText.getText().toString()).start();
+            }
+        })
+        .setNegativeButton(R.string.cancel, null)
+        .create().show();
     }
 
     private static abstract class ConfirmExportCallback {
@@ -124,24 +145,38 @@ public class TableIO {
         EditText editText = new EditText(activity);
         editText.setHint(R.string.input_introduction_here);
 
-        new AlertDialog.Builder(activity)
-                .setTitle(R.string.export_data)
-                .setMessage(R.string.export_data_msg)
-                .setView(editText)
-                .setPositiveButton(R.string.confirm,
-                        (dialog, which) -> confirmExportCallback.onConfirm(editText.getText().toString()))
-                .setNegativeButton(R.string.cancel, null)
-                .create().show();
+    new AlertDialog.Builder(activity)
+        .setTitle(R.string.export_data)
+        .setMessage(R.string.export_data_msg)
+        .setView(editText)
+        .setPositiveButton(R.string.confirm, (dialog, which) -> {
+            if (which == DialogInterface.BUTTON_POSITIVE) {
+            dialog.dismiss();
+            confirmExportCallback.onConfirm(editText.getText().toString());
+            }
+        })
+        .setNegativeButton(R.string.cancel, null)
+        .create().show();
     }
 
     private static void export_cpy(Activity activity, String desc) {
-        // TODO: clipboard
-        try {
-            DialogUtil.showDetailedInfo(activity, R.string.export_done, R.string.export_done_msg,
-                    "konabess://" + getConfig(desc));
-        } catch (Exception e) {
-            DialogUtil.showError(activity, R.string.error_occur);
-        }
+        AlertDialog waiting = DialogUtil.getWaitDialog(activity, R.string.prepare_import_export);
+        waiting.show();
+        new Thread(() -> {
+            try {
+                String data = "konabess://" + getConfig(desc);
+                activity.runOnUiThread(() -> {
+                    waiting.dismiss();
+                    DialogUtil.showDetailedInfo(activity, R.string.export_done, R.string.export_done_msg,
+                            data);
+                });
+            } catch (Exception e) {
+                activity.runOnUiThread(() -> {
+                    waiting.dismiss();
+                    DialogUtil.showError(activity, R.string.error_occur);
+                });
+            }
+        }).start();
     }
 
     private static class exportToFile extends Thread {
@@ -156,16 +191,20 @@ public class TableIO {
 
         public void run() {
             error = false;
+            AlertDialog waiting = DialogUtil.getWaitDialog(activity, R.string.prepare_import_export);
+            activity.runOnUiThread(waiting::show);
             File out = new File(Environment.getExternalStorageDirectory().getAbsolutePath() +
                     "/konabess-" + new SimpleDateFormat("MMddHHmmss").format(new Date()) + ".txt");
             try {
+                String data = "konabess://" + getConfig(desc);
                 BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(out));
-                bufferedWriter.write("konabess://" + getConfig(desc));
+                bufferedWriter.write(data);
                 bufferedWriter.close();
-            } catch (IOException e) {
+            } catch (Exception e) {
                 error = true;
             }
             activity.runOnUiThread(() -> {
+                waiting.dismiss();
                 if (!error)
                     Toast.makeText(activity,
                             activity.getResources().getString(R.string.success_export_to) + " " + out.getAbsolutePath(), Toast.LENGTH_LONG).show();
@@ -201,25 +240,28 @@ public class TableIO {
                                     .setMessage(jsonObject.getString(json_keys.DESCRIPTION) + "\n"
                                             + activity.getResources().getString(R.string.compatible_chip) + ChipInfo.name2chipdesc(jsonObject.getString(json_keys.CHIP), activity))
                                     .setPositiveButton(R.string.confirm, (dialog, which) -> {
-                                        waiting_import.show();
-                                        new Thread(() -> {
-                                            try {
-                                                error = decodeAndWriteData(jsonObject);
-                                            } catch (Exception e) {
-                                                error = true;
-                                            }
-                                            activity.runOnUiThread(() -> {
-                                                waiting_import.dismiss();
-                                                if (!error)
-                                                    Toast.makeText(activity,
-                                                            R.string.success_import,
-                                                            Toast.LENGTH_SHORT).show();
-                                                else
-                                                    Toast.makeText(activity,
-                                                            R.string.failed_incompatible,
-                                                            Toast.LENGTH_LONG).show();
-                                            });
-                                        }).start();
+                                        if (which == DialogInterface.BUTTON_POSITIVE) {
+                                            dialog.dismiss();
+                                            waiting_import.show();
+                                            new Thread(() -> {
+                                                try {
+                                                    error = decodeAndWriteData(jsonObject);
+                                                } catch (Exception e) {
+                                                    error = true;
+                                                }
+                                                activity.runOnUiThread(() -> {
+                                                    waiting_import.dismiss();
+                                                    if (!error)
+                                                        Toast.makeText(activity,
+                                                                R.string.success_import,
+                                                                Toast.LENGTH_SHORT).show();
+                                                    else
+                                                        Toast.makeText(activity,
+                                                                R.string.failed_incompatible,
+                                                                Toast.LENGTH_LONG).show();
+                                                });
+                                            }).start();
+                                        }
                                     })
                                     .setNegativeButton(R.string.cancel, null)
                                     .create().show();
@@ -241,7 +283,6 @@ public class TableIO {
 
     private static class importFromFile extends MainActivity.fileWorker {
         Activity activity;
-        boolean error;
 
         public importFromFile(Activity activity) {
             this.activity = activity;
@@ -250,7 +291,6 @@ public class TableIO {
         public void run() {
             if (uri == null)
                 return;
-            error = false;
             activity.runOnUiThread(() -> {
                 waiting_import.show();
             });
@@ -274,62 +314,82 @@ public class TableIO {
             }
         };
 
-        ListView listView = new ListView(activity);
-        ArrayList<ParamAdapter.item> items = new ArrayList<>();
+        RecyclerView recyclerView = new RecyclerView(activity);
+        recyclerView.setLayoutManager(new LinearLayoutManager(activity));
+        recyclerView.setPadding(0, 12, 0, 24);
+        recyclerView.setClipToPadding(false);
 
-        items.add(new ParamAdapter.item() {{
-            title = activity.getResources().getString(R.string.import_from_file);
-            subtitle = activity.getResources().getString(R.string.import_from_file_msg);
-        }});
+        ArrayList<ActionCardAdapter.ActionItem> items = new ArrayList<>();
+    items.add(new ActionCardAdapter.ActionItem(
+        R.drawable.ic_file_download,
+                activity.getResources().getString(R.string.import_from_file),
+                activity.getResources().getString(R.string.import_from_file_msg)));
+    items.add(new ActionCardAdapter.ActionItem(
+        R.drawable.ic_file_upload,
+                activity.getResources().getString(R.string.export_to_file),
+                activity.getResources().getString(R.string.export_to_file_msg)));
+    items.add(new ActionCardAdapter.ActionItem(
+        R.drawable.ic_clipboard_import,
+                activity.getResources().getString(R.string.import_from_clipboard),
+                activity.getResources().getString(R.string.import_from_clipboard_msg)));
+    items.add(new ActionCardAdapter.ActionItem(
+        R.drawable.ic_clipboard_export,
+                activity.getResources().getString(R.string.export_to_clipboard),
+                activity.getResources().getString(R.string.export_to_clipboard_msg)));
+        items.add(new ActionCardAdapter.ActionItem(
+                R.drawable.ic_backup,
+                activity.getResources().getString(R.string.backup_image),
+                activity.getResources().getString(R.string.backup_image_desc)));
 
-        items.add(new ParamAdapter.item() {{
-            title = activity.getResources().getString(R.string.export_to_file);
-            subtitle = activity.getResources().getString(R.string.export_to_file_msg);
-        }});
-
-        items.add(new ParamAdapter.item() {{
-            title = activity.getResources().getString(R.string.import_from_clipboard);
-            subtitle = activity.getResources().getString(R.string.import_from_clipboard_msg);
-        }});
-
-        items.add(new ParamAdapter.item() {{
-            title = activity.getResources().getString(R.string.export_to_clipboard);
-            subtitle = activity.getResources().getString(R.string.export_to_clipboard_msg);
-        }});
-
-        listView.setOnItemClickListener((parent, view, position, id) -> {
-
-            if (position == 0) {
-                MainActivity.runWithFilePath(activity, new importFromFile(activity));
-            } else if (position == 1) {
-                showExportDialog(activity, new ConfirmExportCallback() {
-                    @Override
-                    public void onConfirm(String desc) {
-                        MainActivity.runWithStoragePermission(activity, new exportToFile(activity
-                                , desc));
-                    }
-                });
-            } else if (position == 2) {
-                import_edittext(activity);
-            } else if (position == 3) {
-                showExportDialog(activity, new ConfirmExportCallback() {
-                    @Override
-                    public void onConfirm(String desc) {
-                        export_cpy(activity, desc);
-                    }
-                });
+        ActionCardAdapter adapter = new ActionCardAdapter(items);
+        adapter.setOnItemClickListener(new ActionCardAdapter.OnItemClickListener() {
+            @Override
+            public void onItemClick(int position) {
+                if (position == 0) {
+                    MainActivity.runWithFilePath(activity, new importFromFile(activity));
+                } else if (position == 1) {
+                    showExportDialog(activity, new ConfirmExportCallback() {
+                        @Override
+                        public void onConfirm(String desc) {
+                            MainActivity.runWithStoragePermission(activity, new exportToFile(activity, desc));
+                        }
+                    });
+                } else if (position == 2) {
+                    import_edittext(activity);
+                } else if (position == 3) {
+                    showExportDialog(activity, new ConfirmExportCallback() {
+                        @Override
+                        public void onConfirm(String desc) {
+                            export_cpy(activity, desc);
+                        }
+                    });
+                } else if (position == 4) {
+                    MainActivity mainActivity = (MainActivity) activity;
+                    new AlertDialog.Builder(mainActivity)
+                            .setTitle(R.string.backup_old_image)
+                            .setMessage(activity.getResources().getString(R.string.will_backup_to) + " /sdcard/" + KonaBessCore.boot_name + ".img")
+                            .setPositiveButton(R.string.ok, (dialog, which) -> {
+                                if (which == DialogInterface.BUTTON_POSITIVE) {
+                                    dialog.dismiss();
+                                    MainActivity.runWithStoragePermission(mainActivity, mainActivity.new backupBoot(mainActivity));
+                                }
+                            })
+                            .setNegativeButton(R.string.cancel, null)
+                            .create().show();
+                }
             }
         });
 
-        listView.setAdapter(new ParamAdapter(items, activity));
+        recyclerView.setAdapter(adapter);
 
         page.removeAllViews();
-        page.addView(listView);
+        page.addView(recyclerView, new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT));
     }
 
-    static class TableIOLogic extends Thread {
+    public static class TableIOLogic extends Thread {
         Activity activity;
-        AlertDialog waiting;
         LinearLayout showedView;
         LinearLayout page;
 
@@ -341,24 +401,6 @@ public class TableIO {
         public void run() {
             activity.runOnUiThread(() -> {
                 waiting_import = DialogUtil.getWaitDialog(activity, R.string.wait_importing);
-                waiting = DialogUtil.getWaitDialog(activity, R.string.prepare_import_export);
-                waiting.show();
-            });
-
-            try {
-                GpuTableEditor.init();
-                GpuTableEditor.decode();
-                if (!ChipInfo.shouldIgnoreVoltTable(ChipInfo.which)) {
-                    GpuVoltEditor.init();
-                    GpuVoltEditor.decode();
-                }
-            } catch (Exception e) {
-                activity.runOnUiThread(() -> DialogUtil.showError(activity,
-                        R.string.failed_getting_freq_voltage));
-            }
-
-            activity.runOnUiThread(() -> {
-                waiting.dismiss();
                 showedView.removeAllViews();
                 page = new LinearLayout(activity);
                 page.setOrientation(LinearLayout.VERTICAL);
