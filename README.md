@@ -1,6 +1,6 @@
 # KonaBess
 
-[中文版](https://github.com/xzr467706992/KonaBess/blob/master/README_zh-CN.md)
+[中文版](https://github.com/ireddragonicy/KonaBess/blob/master/README_zh-CN.md)
 
 ### Supported Devices
 
@@ -57,4 +57,4 @@ The extent of improvement varies, with some users reporting a 25% reduction in p
 
 ### Screenshots
 
-<img src="https://raw.githubusercontent.com/xzr467706992/KonaBess/master/screenshots/ss1.jpg" width="180" height="400" /> <img src="https://raw.githubusercontent.com/xzr467706992/KonaBess/master/screenshots/ss2.jpg" width="180" height="400" /> <img src="https://raw.githubusercontent.com/xzr467706992/KonaBess/master/screenshots/ss3.jpg" width="180" height="400" />
+<img src="https://raw.githubusercontent.com/ireddragonicy/KonaBess/master/screenshots/ss1.jpg" width="180" height="400" /> <img src="https://raw.githubusercontent.com/ireddragonicy/KonaBess/master/screenshots/ss2.jpg" width="180" height="400" /> <img src="https://raw.githubusercontent.com/ireddragonicy/KonaBess/master/screenshots/ss3.jpg" width="180" height="400" />

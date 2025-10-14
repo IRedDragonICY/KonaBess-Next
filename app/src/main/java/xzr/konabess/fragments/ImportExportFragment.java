@@ -27,7 +27,19 @@ public class ImportExportFragment extends Fragment {
         return contentContainer;
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        // Refresh the import/export actions so they reflect the latest preparation state
+        if (contentContainer != null) {
+            loadContent();
+        }
+    }
+
     private void loadContent() {
+        if (!isAdded()) {
+            return;
+        }
         if (getActivity() instanceof MainActivity) {
             new TableIO.TableIOLogic((MainActivity) getActivity(), contentContainer).start();
         }

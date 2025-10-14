@@ -491,7 +491,7 @@ public class GpuTableEditor {
     }
 
     private static void saveCurrentSession() {
-        KonaBessCore.dtb current = KonaBessCore.getCurrentDtb();
+    KonaBessCore.Dtb current = KonaBessCore.getCurrentDtb();
         if (current == null || lines_in_dts == null || bins == null) {
             return;
         }
@@ -1651,7 +1651,7 @@ public class GpuTableEditor {
         
         // Chipset name
         TextView chipsetName = new TextView(activity);
-        KonaBessCore.dtb currentDtb = KonaBessCore.getCurrentDtb();
+    KonaBessCore.Dtb currentDtb = KonaBessCore.getCurrentDtb();
         if (currentDtb != null) {
             chipsetName.setText(currentDtb.id + " " + 
                     ChipInfo.name2chipdesc(currentDtb.type, activity));
@@ -1693,10 +1693,10 @@ public class GpuTableEditor {
         ListView listView = new ListView(activity);
         ArrayList<ParamAdapter.item> items = new ArrayList<>();
         
-        KonaBessCore.dtb currentDtb = KonaBessCore.getCurrentDtb();
+    KonaBessCore.Dtb currentDtb = KonaBessCore.getCurrentDtb();
         int currentDtbIndex = KonaBessCore.getDtbIndex();
         
-        for (KonaBessCore.dtb dtb : KonaBessCore.dtbs) {
+    for (KonaBessCore.Dtb dtb : KonaBessCore.dtbs) {
             items.add(new ParamAdapter.item() {{
                 title = dtb.id + " " + ChipInfo.name2chipdesc(dtb.type, activity);
                 // Highlight current selected
@@ -1716,7 +1716,7 @@ public class GpuTableEditor {
         dialog.show();
         
         listView.setOnItemClickListener((parent, view, position, id) -> {
-            KonaBessCore.dtb selectedDtb = KonaBessCore.dtbs.get(position);
+            KonaBessCore.Dtb selectedDtb = KonaBessCore.dtbs.get(position);
             
             // Show confirmation if switching chipset
             if (currentDtb != null && selectedDtb.id != currentDtb.id) {
@@ -1736,13 +1736,13 @@ public class GpuTableEditor {
     }
     
     private static void switchChipset(Activity activity, LinearLayout page, 
-                                      KonaBessCore.dtb newDtb, TextView chipsetNameView) {
+                                      KonaBessCore.Dtb newDtb, TextView chipsetNameView) {
         AlertDialog waiting = DialogUtil.getWaitDialog(activity, R.string.getting_freq_table);
         waiting.show();
         
         new Thread(() -> {
             try {
-                KonaBessCore.dtb previous = KonaBessCore.getCurrentDtb();
+                KonaBessCore.Dtb previous = KonaBessCore.getCurrentDtb();
                 if (previous != null && previous.id != newDtb.id) {
                     saveCurrentSession();
                 }

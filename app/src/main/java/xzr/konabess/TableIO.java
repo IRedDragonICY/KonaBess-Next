@@ -254,11 +254,14 @@ public class TableIO {
                                                 }
                                                 activity.runOnUiThread(() -> {
                                                     waiting_import.dismiss();
-                                                    if (!error)
+                                                    if (!error) {
                                                         Toast.makeText(activity,
                                                                 R.string.success_import,
                                                                 Toast.LENGTH_SHORT).show();
-                                                    else
+                                                        if (activity instanceof MainActivity) {
+                                                            ((MainActivity) activity).notifyGpuTableChanged();
+                                                        }
+                                                    } else
                                                         Toast.makeText(activity,
                                                                 R.string.failed_incompatible,
                                                                 Toast.LENGTH_LONG).show();

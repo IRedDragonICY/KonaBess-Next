@@ -52,6 +52,7 @@ public class MainActivity extends AppCompatActivity {
     private boolean isPageChangeFromUser = true;
     private String currentTitle;
     private String lastGpuToolbarTitle;
+    private GpuFrequencyFragment gpuFrequencyFragment;
 
     @Override
     protected void attachBaseContext(Context newBase) {
@@ -175,8 +176,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setupViewPager() {
+        gpuFrequencyFragment = new GpuFrequencyFragment();
+
         ArrayList<Fragment> fragments = new ArrayList<>(Arrays.asList(
-            new GpuFrequencyFragment(),
+            gpuFrequencyFragment,
             new ImportExportFragment(),
             new SettingsFragment()
         ));
@@ -264,6 +267,14 @@ public class MainActivity extends AppCompatActivity {
             lastGpuToolbarTitle = getDefaultGpuToolbarTitle();
         }
         updateToolbarTitle(lastGpuToolbarTitle);
+    }
+
+    public void notifyGpuTableChanged() {
+        runOnUiThread(() -> {
+            if (gpuFrequencyFragment != null) {
+                gpuFrequencyFragment.markDataDirty();
+            }
+        });
     }
 
     public String getCurrentToolbarTitle() {
@@ -518,7 +529,7 @@ public class MainActivity extends AppCompatActivity {
                 }
                 ListView listView = new ListView(MainActivity.this);
                 ArrayList<ParamAdapter.item> items = new ArrayList<>();
-                for (KonaBessCore.dtb dtb : KonaBessCore.dtbs) {
+                for (KonaBessCore.Dtb dtb : KonaBessCore.dtbs) {
                     items.add(new ParamAdapter.item() {{
                         title = dtb.id + " " + ChipInfo.name2chipdesc(dtb.type, MainActivity.this);
                         subtitle = dtb.id == dtb_index ?

@@ -81,9 +81,12 @@ android {
     }
     
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
+
+    // Ensure desugaring supports newer Java APIs on older Android versions
+    buildToolsVersion = "34.0.0"
     
     lint {
         abortOnError = false

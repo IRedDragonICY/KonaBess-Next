@@ -222,18 +222,18 @@ public class SettingsFragment extends Fragment {
                 .setNeutralButton(getString(R.string.about),
                         (dialog, which) -> new com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
                                 .setTitle(getString(R.string.about))
-                                .setMessage(getResources().getString(R.string.author) + " " +
-                                        "xzr467706992 (LibXZR)\n" + getResources().getString(R.string.release_at) + " www.akr-developers.com\n")
+                .setMessage(getResources().getString(R.string.author) + " " +
+                    "IRedDragonICY & xzr467706992 (LibXZR)\n" + getResources().getString(R.string.release_at) + " www.akr-developers.com\n")
                                 .setPositiveButton(getString(R.string.ok), null)
                                 .setNegativeButton("Github",
                                         (dialog1, which1) -> startActivity(new Intent() {{
                                             setAction(Intent.ACTION_VIEW);
-                                            setData(Uri.parse("https://github.com/xzr467706992/KonaBess"));
+                                            setData(Uri.parse("https://github.com/ireddragonicy/KonaBess"));
                                         }}))
                                 .setNeutralButton(getString(R.string.visit_akr),
                                         (dialog1, which1) -> startActivity(new Intent() {{
                                             setAction(Intent.ACTION_VIEW);
-                                            setData(Uri.parse("https://www.akr-developers.com/d/441"));
+                                            setData(Uri.parse("https://github.com/ireddragonicy"));
                                         }})).create().show())
                 .create().show();
     }

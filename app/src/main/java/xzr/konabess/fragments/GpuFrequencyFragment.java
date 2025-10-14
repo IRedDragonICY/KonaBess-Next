@@ -16,6 +16,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.Lifecycle;
 
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
@@ -28,6 +29,7 @@ import xzr.konabess.R;
 public class GpuFrequencyFragment extends Fragment {
     private LinearLayout contentContainer;
     private MainActivity.DevicePreparationListener preparationListener;
+    private boolean needsReload = false;
 
     @Nullable
     @Override
@@ -44,6 +46,22 @@ public class GpuFrequencyFragment extends Fragment {
     public void onDestroyView() {
         super.onDestroyView();
         preparationListener = null;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        reloadIfNeeded();
+    }
+
+    public void markDataDirty() {
+        needsReload = true;
+        if (!isAdded()) {
+            return;
+        }
+        if (getLifecycle().getCurrentState().isAtLeast(Lifecycle.State.STARTED)) {
+            reloadIfNeeded();
+        }
     }
 
     private void loadContent() {
@@ -305,6 +323,17 @@ public class GpuFrequencyFragment extends Fragment {
         };
 
         activity.ensureDevicePrepared(preparationListener);
+    }
+
+    private void reloadIfNeeded() {
+        if (!needsReload) {
+            return;
+        }
+        if (contentContainer == null) {
+            return;
+        }
+        needsReload = false;
+        loadContent();
     }
 }
 
