@@ -50,13 +50,13 @@ android {
         cruncherEnabled = false
     }
     
-    // Packaging options
-    packagingOptions {
+    // Packaging options (new DSL replaces deprecated packagingOptions)
+    packaging {
         jniLibs {
             // Don't extract native libraries (keeps them compressed)
             useLegacyPackaging = false
         }
-        
+
         // Exclude unnecessary files
         resources {
             excludes += [
@@ -81,13 +81,11 @@ android {
     }
     
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        // Align with Gradle 9.x / AGP 8.8 requirements
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
     }
 
-    // Ensure desugaring supports newer Java APIs on older Android versions
-    buildToolsVersion = "34.0.0"
-    
     lint {
         abortOnError = false
         checkReleaseBuilds = false
