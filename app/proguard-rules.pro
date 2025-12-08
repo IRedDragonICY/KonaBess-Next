@@ -43,17 +43,17 @@
 -dontwarn androidx.**
 
 # Keep only application classes that are actually used
--keep class xzr.konabess.MainActivity { *; }
--keep class xzr.konabess.SettingsActivity { *; }
--keep class xzr.konabess.GpuTableEditor { *; }
--keep class xzr.konabess.GpuVoltEditor { *; }
--keep class xzr.konabess.KonaBessCore { *; }
+-keep class com.ireddragonicy.konabessnext.MainActivity { *; }
+-keep class com.ireddragonicy.konabessnext.SettingsActivity { *; }
+-keep class com.ireddragonicy.konabessnext.GpuTableEditor { *; }
+-keep class com.ireddragonicy.konabessnext.GpuVoltEditor { *; }
+-keep class com.ireddragonicy.konabessnext.KonaBessCore { *; }
 
 # Keep adapters (used by RecyclerView)
--keep class xzr.konabess.adapters.** { *; }
+-keep class com.ireddragonicy.konabessnext.adapters.** { *; }
 
 # Keep utils
--keep class xzr.konabess.utils.** { *; }
+-keep class com.ireddragonicy.konabessnext.utils.** { *; }
 
 # Keep native methods
 -keepclasseswithmembernames,includedescriptorclasses class * {

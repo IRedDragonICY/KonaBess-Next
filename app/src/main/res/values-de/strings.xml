@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="about">Über</string>
-    <string name="app_name">KonaBess</string>
+    <string name="app_name">KonaBess Next</string>
     <string name="author">Author:</string>
     <string name="back">Zurück</string>
     <string name="backup_old_image">Altes Image sichern</string>

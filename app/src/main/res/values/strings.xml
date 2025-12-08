@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">KonaBess</string>
+    <string name="app_name">KonaBess Next</string>
     <string name="environ_setup_failed">Failed when setting up the environment</string>
     <string name="storage_permission_failed">Unable to get storage permission</string>
     <string name="repack_and_flash">Repack and flash new image</string>

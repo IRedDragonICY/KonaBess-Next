@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">KonaBess</string>
+    <string name="app_name">KonaBess Next</string>
     <string name="environ_setup_failed">环境初始化失败</string>
     <string name="storage_permission_failed">存储权限申请未成功</string>
     <string name="repack_and_flash">打包并刷入新镜像</string>

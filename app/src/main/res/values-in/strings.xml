@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">KonaBess</string>
+    <string name="app_name">KonaBess Next</string>
     <string name="environ_setup_failed">Gagal menyiapkan lingkungan</string>
     <string name="storage_permission_failed">Tidak dapat mendapatkan izin penyimpanan</string>
     <string name="repack_and_flash">Kemas ulang dan flash gambar baru</string>

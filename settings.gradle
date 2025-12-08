@@ -16,4 +16,4 @@ dependencyResolutionManagement {
 }
 
 include ':app'
-rootProject.name = "KonaBess"
+rootProject.name = "KonaBess Next"

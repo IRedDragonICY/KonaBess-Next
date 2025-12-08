@@ -3,7 +3,7 @@ plugins {
 }
 
 android {
-    namespace = 'xzr.konabess'
+    namespace = 'com.ireddragonicy.konabessnext'
     compileSdk = 34
     
     buildFeatures {
@@ -11,7 +11,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "xzr.konabess"
+        applicationId = "com.ireddragonicy.konabessnext"
         minSdk = 28
         targetSdk = 34
         versionCode = 100
