@@ -1,0 +1,193 @@
+name: Android Build & Pre-Release
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up JDK 21
+      uses: actions/setup-java@v4
+      with:
+        java-version: '21'
+        distribution: 'temurin'
+        cache: gradle
+        
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
+
+    - name: Decode Keystore
+      run: |
+        if [ ! -z "${{ secrets.SIGNING_KEY }}" ]; then
+          echo "${{ secrets.SIGNING_KEY }}" | base64 -d > ${{ github.workspace }}/keystore.jks
+          echo "✅ Keystore decoded from secrets"
+        else
+          echo "⚠️ No SIGNING_KEY secret found. Release build might fail or be unsigned if configured to verify."
+          # Fallback or error handling if strictly required
+        fi
+      
+    - name: Build Release APK
+      run: |
+        # Use secrets if available, otherwise just build (which might fail signing if strict)
+        if [ ! -z "${{ secrets.SIGNING_KEY }}" ]; then
+          ./gradlew assembleRelease \
+            -Pandroid.injected.signing.store.file=${{ github.workspace }}/keystore.jks \
+            -Pandroid.injected.signing.store.password=${{ secrets.KEY_STORE_PASSWORD }} \
+            -Pandroid.injected.signing.key.alias=${{ secrets.KEY_ALIAS }} \
+            -Pandroid.injected.signing.key.password=${{ secrets.KEY_PASSWORD }} \
+            --stacktrace
+        else
+           echo "⚠️ Building without signing injection"
+           ./gradlew assembleRelease --stacktrace
+        fi
+        echo "✅ Release APK built"
+
+    - name: Build Debug APK
+      run: ./gradlew assembleDebug --stacktrace
+      
+    - name: Optimize APK with zipalign
+      run: |
+        # Find and optimize APKs
+        RELEASE_APK=$(find app/build/outputs/apk/release -name "*.apk" -type f | head -1)
+        if [ -n "$RELEASE_APK" ]; then
+          ANDROID_HOME="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          BUILD_TOOLS_VERSION=$(ls -1 "$ANDROID_HOME/build-tools" | sort -V | tail -1)
+          ZIPALIGN="$ANDROID_HOME/build-tools/$BUILD_TOOLS_VERSION/zipalign"
+          
+          if [ -f "$ZIPALIGN" ]; then
+            ALIGNED_APK="${RELEASE_APK%.apk}-aligned.apk"
+            "$ZIPALIGN" -v 4 "$RELEASE_APK" "$ALIGNED_APK"
+            mv "$ALIGNED_APK" "$RELEASE_APK"
+            echo "✅ APK optimized with zipalign"
+          fi
+        fi
+        
+    - name: Get version name
+      id: version
+      run: |
+        # Adjusted for Groovy DSL in app/build.gradle
+        VERSION=$(grep -oP "versionName\s*=\s*['\"]\K[^'\"]+" app/build.gradle || echo "1.0.0")
+        BUILD_NUMBER=${{ github.run_number }}
+        echo "version=${VERSION}" >> $GITHUB_OUTPUT
+        echo "build=${BUILD_NUMBER}" >> $GITHUB_OUTPUT
+        echo "tag=v${VERSION}-build${BUILD_NUMBER}" >> $GITHUB_OUTPUT
+        
+    - name: Rename and prepare APK files
+      run: |
+        VERSION=${{ steps.version.outputs.version }}
+        BUILD=${{ steps.version.outputs.build }}
+        
+        # Rename Debug APK
+        if [ -f "app/build/outputs/apk/debug/app-debug.apk" ]; then
+          mv app/build/outputs/apk/debug/app-debug.apk "app/build/outputs/apk/debug/KonaBessNext-v${VERSION}-build${BUILD}-debug.apk"
+          echo "✅ Debug APK renamed"
+        fi
+        
+        # Handle Release APK
+        RELEASE_APK=$(find app/build/outputs/apk/release -name "*.apk" -type f | head -1)
+        if [ -n "$RELEASE_APK" ]; then
+           mv "$RELEASE_APK" "app/build/outputs/apk/release/KonaBessNext-v${VERSION}-build${BUILD}-release.apk"
+           echo "✅ Release APK renamed"
+        fi
+        
+        # Show APK sizes
+        echo ""
+        echo "📦 APK Sizes:"
+        ls -lh app/build/outputs/apk/debug/*.apk 2>/dev/null || true
+        ls -lh app/build/outputs/apk/release/*.apk 2>/dev/null || true
+
+    - name: VirusTotal Scan
+      uses: crazy-max/ghaction-virustotal@v4
+      if: github.event_name == 'push'
+      with:
+        vt_api_key: ${{ secrets.VT_API_KEY }}
+        files: |
+          app/build/outputs/apk/release/*.apk
+          app/build/outputs/apk/debug/*.apk
+        
+    - name: Delete old pre-releases
+      uses: dev-drprasad/delete-older-releases@v0.3.4
+      if: github.event_name == 'push'
+      with:
+        keep_latest: 5
+        delete_tags: true
+        delete_prerelease_only: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Create Pre-Release
+      uses: softprops/action-gh-release@v1
+      if: github.event_name == 'push'
+      with:
+        tag_name: ${{ steps.version.outputs.tag }}
+        name: Pre-Release ${{ steps.version.outputs.version }} (Build ${{ steps.version.outputs.build }})
+        body: |
+          ## 🚀 Auto-Build Pre-Release
+          
+          **Version:** ${{ steps.version.outputs.version }}
+          **Build Number:** ${{ steps.version.outputs.build }}
+          **Commit:** ${{ github.sha }}
+          **Branch:** ${{ github.ref_name }}
+          
+          ### 📦 Downloads
+          - **Release APK**: Optimized & signed production build ✅
+          - **Debug APK**: For testing with detailed logs
+          
+          ### ⚠️ Pre-Release Notice
+          This is an automated pre-release build.
+          
+          ### 📝 Recent Changes
+          ${{ github.event.head_commit.message }}
+          
+          ---
+          Built automatically by GitHub Actions
+        draft: false
+        prerelease: true
+        files: |
+          app/build/outputs/apk/debug/KonaBessNext-*.apk
+          app/build/outputs/apk/release/KonaBessNext-*.apk
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Upload Debug APK as Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: debug-apk
+        path: app/build/outputs/apk/debug/*.apk
+        retention-days: 30
+        
+    - name: Upload Release APK as Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: release-apk
+        path: app/build/outputs/apk/release/*.apk
+        retention-days: 90
+
+    - name: Cleanup Keystore
+      if: always()
+      run: rm -f ${{ github.workspace }}/keystore.jks
+        
+    - name: Build Summary
+      if: always()
+      run: |
+        echo "## 📊 Build Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "| Property | Value |" >> $GITHUB_STEP_SUMMARY
+        echo "|----------|-------|" >> $GITHUB_STEP_SUMMARY
+        echo "| Version | ${{ steps.version.outputs.version }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Build | ${{ steps.version.outputs.build }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Tag | ${{ steps.version.outputs.tag }} |" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 📦 APK Sizes" >> $GITHUB_STEP_SUMMARY
+        echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+        ls -lh app/build/outputs/apk/debug/*.apk 2>/dev/null >> $GITHUB_STEP_SUMMARY || true
+        ls -lh app/build/outputs/apk/release/*.apk 2>/dev/null >> $GITHUB_STEP_SUMMARY || true
+        echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
