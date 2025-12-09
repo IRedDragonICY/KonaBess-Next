@@ -85,26 +85,33 @@ jobs:
         VERSION=${{ steps.version.outputs.version }}
         BUILD=${{ steps.version.outputs.build }}
         
+        # Check files before rename
+        echo "Listing debug directory:"
+        ls -R app/build/outputs/apk/debug/ || echo "Debug directory not found or empty"
+        
         # Rename Debug APK
         if [ -f "app/build/outputs/apk/debug/app-debug.apk" ]; then
           mv app/build/outputs/apk/debug/app-debug.apk "app/build/outputs/apk/debug/KonaBessNext-v${VERSION}-build${BUILD}-debug.apk"
-          echo "✅ Debug APK renamed"
+          echo "Debug APK renamed successfully"
+        else
+          echo "Warning: app-debug.apk not found. Debug APK will not be included."
         fi
         
         # Handle Release APK
         RELEASE_APK=$(find app/build/outputs/apk/release -name "*.apk" -type f | head -1)
         if [ -n "$RELEASE_APK" ]; then
            mv "$RELEASE_APK" "app/build/outputs/apk/release/KonaBessNext-v${VERSION}-build${BUILD}-release.apk"
-           echo "✅ Release APK renamed"
+           echo "Release APK renamed successfully"
         fi
         
         # Show APK sizes
         echo ""
-        echo "📦 APK Sizes:"
+        echo "APK Sizes:"
         ls -lh app/build/outputs/apk/debug/*.apk 2>/dev/null || true
         ls -lh app/build/outputs/apk/release/*.apk 2>/dev/null || true
 
     - name: VirusTotal Scan
+      id: virustotal
       uses: crazy-max/ghaction-virustotal@v4
       if: github.event_name == 'push'
       with:
@@ -128,23 +135,27 @@ jobs:
       if: github.event_name == 'push'
       with:
         tag_name: ${{ steps.version.outputs.tag }}
-        name: Pre-Release ${{ steps.version.outputs.version }} (Build ${{ steps.version.outputs.build }})
+        name: Build ${{ steps.version.outputs.version }} (${{ steps.version.outputs.build }})
         body: |
-          ## 🚀 Auto-Build Pre-Release
+          ## Automated Build
           
           **Version:** ${{ steps.version.outputs.version }}
           **Build Number:** ${{ steps.version.outputs.build }}
           **Commit:** ${{ github.sha }}
           **Branch:** ${{ github.ref_name }}
           
-          ### 📦 Downloads
-          - **Release APK**: Optimized & signed production build ✅
-          - **Debug APK**: For testing with detailed logs
+          ### Artifacts
+          - **Release APK**: Optimized and signed production build.
+          - **Debug APK**: For testing with detailed logs.
           
-          ### ⚠️ Pre-Release Notice
+          ### Security Scan
+          VirusTotal Scan Results:
+          ${{ steps.virustotal.outputs.analysis_url }}
+          
+          ### Build Information
           This is an automated pre-release build.
           
-          ### 📝 Recent Changes
+          ### Changelog
           ${{ github.event.head_commit.message }}
           
           ---

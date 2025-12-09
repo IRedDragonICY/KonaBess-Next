@@ -133,8 +133,7 @@ public class GpuTableEditor {
         lines_in_dts = new ArrayList<>();
         bins = new ArrayList<>();
         bin_position = -1;
-        BufferedReader bufferedReader =
-                new BufferedReader(new FileReader(new File(KonaBessCore.dts_path)));
+        BufferedReader bufferedReader = new BufferedReader(new FileReader(new File(KonaBessCore.dts_path)));
         String s;
         while ((s = bufferedReader.readLine()) != null) {
             lines_in_dts.add(s);
@@ -208,18 +207,18 @@ public class GpuTableEditor {
 
             if (bracket == 0 && start >= 0
                     && (ChipInfo.which == ChipInfo.type.kona
-                    || ChipInfo.which == ChipInfo.type.msmnile
-                    || ChipInfo.which == ChipInfo.type.lahaina
-                    || ChipInfo.which == ChipInfo.type.lito_v1 || ChipInfo.which == ChipInfo.type.lito_v2
-                    || ChipInfo.which == ChipInfo.type.lagoon
-                    || ChipInfo.which == ChipInfo.type.shima
-                    || ChipInfo.which == ChipInfo.type.yupik
-                    || ChipInfo.which == ChipInfo.type.kalama
-                    || ChipInfo.which == ChipInfo.type.diwali
-                    || ChipInfo.which == ChipInfo.type.pineapple
-                    || ChipInfo.which == ChipInfo.type.sun
-                    || ChipInfo.which == ChipInfo.type.canoe
-                    || ChipInfo.which == ChipInfo.type.tuna)) {
+                            || ChipInfo.which == ChipInfo.type.msmnile
+                            || ChipInfo.which == ChipInfo.type.lahaina
+                            || ChipInfo.which == ChipInfo.type.lito_v1 || ChipInfo.which == ChipInfo.type.lito_v2
+                            || ChipInfo.which == ChipInfo.type.lagoon
+                            || ChipInfo.which == ChipInfo.type.shima
+                            || ChipInfo.which == ChipInfo.type.yupik
+                            || ChipInfo.which == ChipInfo.type.kalama
+                            || ChipInfo.which == ChipInfo.type.diwali
+                            || ChipInfo.which == ChipInfo.type.pineapple
+                            || ChipInfo.which == ChipInfo.type.sun
+                            || ChipInfo.which == ChipInfo.type.canoe
+                            || ChipInfo.which == ChipInfo.type.tuna)) {
                 end = i;
                 if (end >= start) {
                     try {
@@ -384,7 +383,7 @@ public class GpuTableEditor {
 
     public static void writeOut(List<String> new_dts) throws IOException {
         File file = new File(KonaBessCore.dts_path);
-        
+
         // If file exists, delete it first to avoid permission issues
         if (file.exists()) {
             if (!file.delete()) {
@@ -395,16 +394,16 @@ public class GpuTableEditor {
                 }
             }
         }
-        
+
         // Create new file
         if (!file.createNewFile()) {
             throw new IOException("Failed to create file: " + file.getAbsolutePath());
         }
-        
+
         // Set proper permissions
         file.setReadable(true, false);
         file.setWritable(true, false);
-        
+
         BufferedWriter bufferedWriter = null;
         try {
             bufferedWriter = new BufferedWriter(new FileWriter(file));
@@ -493,7 +492,7 @@ public class GpuTableEditor {
     }
 
     private static void saveCurrentSession() {
-    KonaBessCore.Dtb current = KonaBessCore.getCurrentDtb();
+        KonaBessCore.Dtb current = KonaBessCore.getCurrentDtb();
         if (current == null || lines_in_dts == null || bins == null) {
             return;
         }
@@ -614,7 +613,8 @@ public class GpuTableEditor {
             }
             Activity activity = currentActivity;
             if (activity == null) {
-                historyButtonRef.setText("History" + (changeHistory.isEmpty() ? "" : " (" + changeHistory.size() + ")"));
+                historyButtonRef
+                        .setText("History" + (changeHistory.isEmpty() ? "" : " (" + changeHistory.size() + ")"));
                 return;
             }
             if (changeHistory.isEmpty()) {
@@ -813,12 +813,12 @@ public class GpuTableEditor {
         if ("qcom,level".equals(raw_name) || "qcom,cx-level".equals(raw_name)) {
             return GpuVoltEditor.levelint2str(DtsHelper.decode_int_line(line).value);
         }
-        return DtsHelper.shouldUseHex(line) ? DtsHelper.decode_hex_line(line).value :
-                DtsHelper.decode_int_line(line).value + "";
+        return DtsHelper.shouldUseHex(line) ? DtsHelper.decode_hex_line(line).value
+                : DtsHelper.decode_int_line(line).value + "";
     }
 
     private static void generateALevel(Activity activity, int last, int levelid,
-                                       LinearLayout page) throws Exception {
+            LinearLayout page) throws Exception {
         ((MainActivity) activity).onBackPressedListener = new MainActivity.onBackPressedListener() {
             @Override
             public void onBackPressed() {
@@ -840,30 +840,29 @@ public class GpuTableEditor {
         // Create RecyclerView with Material You card design
         RecyclerView recyclerView = new RecyclerView(activity);
         recyclerView.setLayoutManager(new LinearLayoutManager(activity));
-        
+
         ArrayList<GpuParamDetailAdapter.ParamDetailItem> items = new ArrayList<>();
 
         // Add back button as first item
         items.add(new GpuParamDetailAdapter.ParamDetailItem(
                 activity.getResources().getString(R.string.back),
                 R.drawable.ic_back,
-                true
-        ));
+                true));
 
-    // Group bus-max, bus-min, and bus-freq into modern stat cards
-    ArrayList<GpuParamDetailAdapter.StatItem> statsGroup = new ArrayList<>();
-    ArrayList<GpuParamDetailAdapter.ParamDetailItem> otherParams = new ArrayList<>();
-        
+        // Group bus-max, bus-min, and bus-freq into modern stat cards
+        ArrayList<GpuParamDetailAdapter.StatItem> statsGroup = new ArrayList<>();
+        ArrayList<GpuParamDetailAdapter.ParamDetailItem> otherParams = new ArrayList<>();
+
         int lineIndex = 0;
         for (String line : bins.get(last).levels.get(levelid).lines) {
             String paramName = DtsHelper.decode_hex_line(line).name;
             String paramTitle = KonaBessStr.convert_level_params(paramName, activity);
             String paramValue = generateSubtitle(line);
             int iconRes = GpuParamDetailAdapter.getIconForParam(paramName);
-            
+
             // Group bus-freq, bus-min, and bus-max into stat cards (NOT gpu-freq)
             if (paramName.contains("bus-freq") || paramName.contains("bus-min") || paramName.contains("bus-max")) {
-                
+
                 // Simplify label for stat cards
                 String statLabel = paramTitle;
                 if (paramName.contains("bus-freq")) {
@@ -873,14 +872,13 @@ public class GpuTableEditor {
                 } else if (paramName.contains("bus-max")) {
                     statLabel = "Bus Max";
                 }
-                
+
                 statsGroup.add(new GpuParamDetailAdapter.StatItem(
-                    statLabel,
-                    paramValue,
-                    paramName,
-                    iconRes,
-                    lineIndex
-                ));
+                        statLabel,
+                        paramValue,
+                        paramName,
+                        iconRes,
+                        lineIndex));
             } else {
                 // Other parameters use regular card layout
                 // Special handling for GPU frequency to make it clearer
@@ -888,13 +886,12 @@ public class GpuTableEditor {
                 if (paramName.contains("gpu-freq") || (paramName.contains("frequency") && !paramName.contains("bus"))) {
                     displayTitle = "GPU Frequency";
                 }
-                
+
                 GpuParamDetailAdapter.ParamDetailItem paramItem = new GpuParamDetailAdapter.ParamDetailItem(
-                    displayTitle,
-                    paramValue,
-                    paramName,
-                    iconRes
-                );
+                        displayTitle,
+                        paramValue,
+                        paramName,
+                        iconRes);
                 paramItem.lineIndex = lineIndex;
                 otherParams.add(paramItem);
             }
@@ -932,7 +929,8 @@ public class GpuTableEditor {
                     String raw_value = DtsHelper.shouldUseHex(line)
                             ? DtsHelper.decode_hex_line(line).value
                             : DtsHelper.decode_int_line(line).value + "";
-                    handleParameterEdit(activity, last, levelid, page, actualLineIndex, raw_name, raw_value, statItem.label);
+                    handleParameterEdit(activity, last, levelid, page, actualLineIndex, raw_name, raw_value,
+                            statItem.label);
                 } catch (Exception e) {
                     DialogUtil.showError(activity, R.string.error_occur);
                 }
@@ -954,7 +952,8 @@ public class GpuTableEditor {
                             ? DtsHelper.decode_hex_line(line).value
                             : DtsHelper.decode_int_line(line).value + "";
                     String paramTitle = item.title;
-                    handleParameterEdit(activity, last, levelid, page, actualLineIndex, raw_name, raw_value, paramTitle);
+                    handleParameterEdit(activity, last, levelid, page, actualLineIndex, raw_name, raw_value,
+                            paramTitle);
                 } catch (Exception e) {
                     DialogUtil.showError(activity, R.string.error_occur);
                 }
@@ -967,9 +966,9 @@ public class GpuTableEditor {
         page.addView(recyclerView);
     }
 
-    private static void handleParameterEdit(Activity activity, int binIndex, int levelIndex, 
-                                           LinearLayout page, int lineIndex, String raw_name, 
-                                           String raw_value, String paramTitle) throws Exception {
+    private static void handleParameterEdit(Activity activity, int binIndex, int levelIndex,
+            LinearLayout page, int lineIndex, String raw_name,
+            String raw_value, String paramTitle) throws Exception {
         // Handle voltage level editing with spinner
         if (raw_name.equals("qcom,level") || raw_name.equals("qcom,cx-level")) {
             try {
@@ -991,18 +990,21 @@ public class GpuTableEditor {
                                     final String newValue = String.valueOf(
                                             ChipInfo.rpmh_levels.levels()[spinner.getSelectedItemPosition()]);
                                     final String encodedLine = DtsHelper.encodeIntOrHexLine(raw_name, newValue);
-                                    final String existingLine = bins.get(binIndex).levels.get(levelIndex).lines.get(lineIndex);
+                                    final String existingLine = bins.get(binIndex).levels.get(levelIndex).lines
+                                            .get(lineIndex);
                                     if (Objects.equals(existingLine, encodedLine)) {
                                         return;
                                     }
                                     final String freqLabel = SettingsActivity.formatFrequency(
                                             getFrequencyFromLevel(bins.get(binIndex).levels.get(levelIndex)), activity);
-                                    applyChange(activity.getString(R.string.history_update_voltage_level, freqLabel), new EditorChange() {
-                                        @Override
-                                        public void run() {
-                                            bins.get(binIndex).levels.get(levelIndex).lines.set(lineIndex, encodedLine);
-                                        }
-                                    });
+                                    applyChange(activity.getString(R.string.history_update_voltage_level, freqLabel),
+                                            new EditorChange() {
+                                                @Override
+                                                public void run() {
+                                                    bins.get(binIndex).levels.get(levelIndex).lines.set(lineIndex,
+                                                            encodedLine);
+                                                }
+                                            });
                                     generateALevel(activity, binIndex, levelIndex, page);
                                     Toast.makeText(activity, R.string.save_success,
                                             Toast.LENGTH_SHORT).show();
@@ -1021,8 +1023,8 @@ public class GpuTableEditor {
         } else {
             // Handle other parameters with text input
             EditText editText = new EditText(activity);
-            editText.setInputType(DtsHelper.shouldUseHex(raw_name) ?
-                    InputType.TYPE_CLASS_TEXT : InputType.TYPE_CLASS_NUMBER);
+            editText.setInputType(
+                    DtsHelper.shouldUseHex(raw_name) ? InputType.TYPE_CLASS_TEXT : InputType.TYPE_CLASS_NUMBER);
             editText.setText(raw_value);
             new com.google.android.material.dialog.MaterialAlertDialogBuilder(activity)
                     .setTitle(activity.getResources().getString(R.string.edit) + " \"" + paramTitle + "\"")
@@ -1034,18 +1036,21 @@ public class GpuTableEditor {
                             try {
                                 final String newValue = editText.getText().toString();
                                 final String encodedLine = DtsHelper.encodeIntOrHexLine(raw_name, newValue);
-                                final String existingLine = bins.get(binIndex).levels.get(levelIndex).lines.get(lineIndex);
+                                final String existingLine = bins.get(binIndex).levels.get(levelIndex).lines
+                                        .get(lineIndex);
                                 if (Objects.equals(existingLine, encodedLine)) {
                                     return;
                                 }
                                 final String freqLabel = SettingsActivity.formatFrequency(
                                         getFrequencyFromLevel(bins.get(binIndex).levels.get(levelIndex)), activity);
-                                applyChange(activity.getString(R.string.history_edit_parameter, paramTitle, freqLabel), new EditorChange() {
-                                    @Override
-                                    public void run() {
-                                        bins.get(binIndex).levels.get(levelIndex).lines.set(lineIndex, encodedLine);
-                                    }
-                                });
+                                applyChange(activity.getString(R.string.history_edit_parameter, paramTitle, freqLabel),
+                                        new EditorChange() {
+                                            @Override
+                                            public void run() {
+                                                bins.get(binIndex).levels.get(levelIndex).lines.set(lineIndex,
+                                                        encodedLine);
+                                            }
+                                        });
                                 generateALevel(activity, binIndex, levelIndex, page);
                                 Toast.makeText(activity, R.string.save_success,
                                         Toast.LENGTH_SHORT).show();
@@ -1257,30 +1262,19 @@ public class GpuTableEditor {
         updateHistoryButtonLabel();
         updateSaveButtonAppearance();
 
-        RecyclerView recyclerView = new RecyclerView(activity);
-        recyclerView.setLayoutManager(new LinearLayoutManager(activity));
-        
-        // Set padding to prevent content from being hidden behind bottom toolbar
-        float density = activity.getResources().getDisplayMetrics().density;
-        int bottomPadding = (int) (density * 80); // Toolbar height + extra space
-        recyclerView.setClipToPadding(false);
-        recyclerView.setPadding(0, 0, 0, bottomPadding);
-        
         ArrayList<GpuFreqAdapter.FreqItem> items = new ArrayList<>();
 
         // Back button (header)
         items.add(new GpuFreqAdapter.FreqItem(
-            activity.getResources().getString(R.string.back),
-            "",
-            GpuFreqAdapter.FreqItem.ActionType.BACK
-        ));
+                activity.getResources().getString(R.string.back),
+                "",
+                GpuFreqAdapter.FreqItem.ActionType.BACK));
 
         // Add new at top button (header)
         items.add(new GpuFreqAdapter.FreqItem(
-            activity.getResources().getString(R.string.add_freq_top),
-            activity.getResources().getString(R.string.add_freq_top_desc),
-            GpuFreqAdapter.FreqItem.ActionType.ADD_TOP
-        ));
+                activity.getResources().getString(R.string.add_freq_top),
+                activity.getResources().getString(R.string.add_freq_top_desc),
+                GpuFreqAdapter.FreqItem.ActionType.ADD_TOP));
 
         // Add all frequency levels
         for (int i = 0; i < bins.get(id).levels.size(); i++) {
@@ -1288,19 +1282,18 @@ public class GpuTableEditor {
             long freq = getFrequencyFromLevel(level);
             if (freq == 0)
                 continue;
-            
+
             GpuFreqAdapter.FreqItem item = new GpuFreqAdapter.FreqItem(
-                SettingsActivity.formatFrequency(freq, activity),
-                ""
-            );
+                    SettingsActivity.formatFrequency(freq, activity),
+                    "");
             item.originalPosition = i;
             item.frequencyHz = freq;
-            
+
             // Extract spec details from DTS lines
             try {
                 for (String line : level.lines) {
                     String paramName = DtsHelper.decode_hex_line(line).name;
-                    
+
                     if ("qcom,bus-max".equals(paramName)) {
                         long busMax = DtsHelper.decode_int_line(line).value;
                         item.busMax = String.valueOf(busMax);
@@ -1319,19 +1312,52 @@ public class GpuTableEditor {
             } catch (Exception e) {
                 // Ignore parsing errors for individual specs
             }
-            
+
             items.add(item);
         }
 
         // Add new at bottom button (footer)
         items.add(new GpuFreqAdapter.FreqItem(
-            activity.getResources().getString(R.string.add_freq_bottom),
-            activity.getResources().getString(R.string.add_freq_bottom_desc),
-            GpuFreqAdapter.FreqItem.ActionType.ADD_BOTTOM
-        ));
+                activity.getResources().getString(R.string.add_freq_bottom),
+                activity.getResources().getString(R.string.add_freq_bottom_desc),
+                GpuFreqAdapter.FreqItem.ActionType.ADD_BOTTOM));
 
-        GpuFreqAdapter adapter = new GpuFreqAdapter(items, activity);
-        
+        final RecyclerView recyclerView;
+        final GpuFreqAdapter adapter;
+
+        if (page.getChildCount() > 0 && page.getChildAt(0) instanceof RecyclerView
+                && ((RecyclerView) page.getChildAt(0)).getAdapter() instanceof GpuFreqAdapter) {
+            recyclerView = (RecyclerView) page.getChildAt(0);
+            adapter = (GpuFreqAdapter) recyclerView.getAdapter();
+            recyclerView.clearOnScrollListeners(); // Remove old listener capturing old ID
+            adapter.updateData(items);
+        } else {
+            recyclerView = new RecyclerView(activity);
+            recyclerView.setLayoutManager(new LinearLayoutManager(activity));
+
+            // Set padding to prevent content from being hidden behind bottom toolbar
+            float density = activity.getResources().getDisplayMetrics().density;
+            int bottomPadding = (int) (density * 80); // Toolbar height + extra space
+            recyclerView.setClipToPadding(false);
+            recyclerView.setPadding(0, 0, 0, bottomPadding);
+
+            adapter = new GpuFreqAdapter(items, activity);
+
+            // Setup drag and drop
+            ItemTouchHelperCallback callback = new ItemTouchHelperCallback(adapter);
+            ItemTouchHelper touchHelper = new ItemTouchHelper(callback);
+            touchHelper.attachToRecyclerView(recyclerView);
+
+            adapter.setOnStartDragListener(viewHolder -> {
+                touchHelper.startDrag(viewHolder);
+            });
+
+            recyclerView.setAdapter(adapter);
+
+            page.removeAllViews();
+            page.addView(recyclerView);
+        }
+
         // Item click listener
         adapter.setOnItemClickListener(position -> {
             GpuFreqAdapter.FreqItem item = items.get(position);
@@ -1388,28 +1414,6 @@ public class GpuTableEditor {
                         DialogUtil.showError(activity, R.string.error_occur);
                     }
                     return;
-                case DUPLICATE:
-                    try {
-                        if (!canAddNewLevel(id, activity))
-                            return;
-                        final int targetPosition = item.targetPosition;
-                        final level template = bins.get(id).levels.get(targetPosition);
-                        final String freqLabel = SettingsActivity.formatFrequency(
-                                getFrequencyFromLevel(template), activity);
-                        applyChange(activity.getString(R.string.history_duplicate_frequency, freqLabel), () -> {
-                            bins.get(id).levels.add(targetPosition + 1, level_clone(template));
-                            offset_initial_level(id, 1);
-                            if (ChipInfo.which == ChipInfo.type.lito_v1
-                                    || ChipInfo.which == ChipInfo.type.lito_v2
-                                    || ChipInfo.which == ChipInfo.type.lagoon) {
-                                offset_ca_target_level(id, 1);
-                            }
-                        });
-                        generateLevels(activity, id, page);
-                    } catch (Exception e) {
-                        DialogUtil.showError(activity, R.string.error_occur);
-                    }
-                    return;
                 case NONE:
                 default:
                     if (item.isLevelItem()) {
@@ -1428,71 +1432,7 @@ public class GpuTableEditor {
                     break;
             }
         });
-        
-        // Long-press listener for inline duplicate
-        adapter.setOnItemLongClickListener(position -> {
-            GpuFreqAdapter.FreqItem item = items.get(position);
-            
-            // Only allow duplicate for regular frequency items
-            if (!item.isLevelItem()) {
-                return;
-            }
-            
-            // Clear all highlights and duplicates
-            for (int i = items.size() - 1; i >= 0; i--) {
-                GpuFreqAdapter.FreqItem currentItem = items.get(i);
-                
-                // Remove duplicate items
-                if (currentItem.isDuplicateItem()) {
-                    items.remove(i);
-                    adapter.notifyItemRemoved(i);
-                    continue;
-                }
-                
-                // Clear highlights
-                if (currentItem.isHighlighted) {
-                    currentItem.isHighlighted = false;
-                    adapter.notifyItemChanged(i);
-                }
-            }
-            
-            // Recalculate position after removal
-            int adjustedPosition = -1;
-            for (int i = 0; i < items.size(); i++) {
-                if (items.get(i) == item) {
-                    adjustedPosition = i;
-                    break;
-                }
-            }
-            
-            if (adjustedPosition == -1) return;
-            
-            // Highlight the selected item
-            item.isHighlighted = true;
-            adapter.notifyItemChanged(adjustedPosition);
-            
-            // Calculate level index
-            int levelIndex = 0;
-            for (int i = 0; i < adjustedPosition; i++) {
-                if (items.get(i).isLevelItem()) {
-                    levelIndex++;
-                }
-            }
-            
-            // Create duplicate card
-            GpuFreqAdapter.FreqItem duplicate = new GpuFreqAdapter.FreqItem(
-                activity.getString(R.string.duplicate_frequency),
-                "",
-                GpuFreqAdapter.FreqItem.ActionType.DUPLICATE
-            );
-            duplicate.targetPosition = levelIndex;
-            
-            // Insert card below the selected item
-            items.add(adjustedPosition + 1, duplicate);
-            adapter.notifyItemInserted(adjustedPosition + 1);
-            recyclerView.smoothScrollToPosition(adjustedPosition);
-        });
-        
+
         // Delete button click listener
         adapter.setOnDeleteClickListener(position -> {
             if (bins.get(id).levels.size() == 1) {
@@ -1529,21 +1469,7 @@ public class GpuTableEditor {
                 DialogUtil.showError(activity, R.string.error_occur);
             }
         });
-        
-        // Setup drag and drop
-        ItemTouchHelperCallback callback = new ItemTouchHelperCallback(adapter);
-        ItemTouchHelper touchHelper = new ItemTouchHelper(callback);
-        touchHelper.attachToRecyclerView(recyclerView);
-        
-        adapter.setOnStartDragListener(viewHolder -> {
-            touchHelper.startDrag(viewHolder);
-        });
-        
-        recyclerView.setAdapter(adapter);
 
-        page.removeAllViews();
-        page.addView(recyclerView);
-        
         // Apply any reordering changes when drag completes
         recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
@@ -1559,8 +1485,9 @@ public class GpuTableEditor {
             }
         });
     }
-    
-    private static void updateBinsFromAdapter(Activity activity, int binId, List<GpuFreqAdapter.FreqItem> items) throws Exception {
+
+    private static void updateBinsFromAdapter(Activity activity, int binId, List<GpuFreqAdapter.FreqItem> items)
+            throws Exception {
         ArrayList<level> currentLevels = bins.get(binId).levels;
         ArrayList<level> newLevels = new ArrayList<>();
         boolean[] used = new boolean[currentLevels.size()];
@@ -1568,7 +1495,8 @@ public class GpuTableEditor {
         for (GpuFreqAdapter.FreqItem item : items) {
             if (!item.isHeader && !item.isFooter && item.hasFrequencyValue()) {
                 for (int index = 0; index < currentLevels.size(); index++) {
-                    if (used[index]) continue;
+                    if (used[index])
+                        continue;
                     level levelRef = currentLevels.get(index);
                     long freq = getFrequencyFromLevel(levelRef);
                     if (freq == item.frequencyHz) {
@@ -1582,8 +1510,8 @@ public class GpuTableEditor {
 
         if (newLevels.size() == currentLevels.size() && !newLevels.equals(currentLevels)) {
             final ArrayList<level> replacement = newLevels;
-            applyChange(activity.getString(R.string.history_reorder_frequency), () ->
-                    bins.get(binId).levels = replacement);
+            applyChange(activity.getString(R.string.history_reorder_frequency),
+                    () -> bins.get(binId).levels = replacement);
         }
     }
 
@@ -1599,63 +1527,63 @@ public class GpuTableEditor {
     private static View createChipsetSelectorCard(Activity activity, LinearLayout page) {
         float density = activity.getResources().getDisplayMetrics().density;
         int padding = (int) (density * 16);
-        
+
         // Main card container
-        com.google.android.material.card.MaterialCardView card = 
-                new com.google.android.material.card.MaterialCardView(activity);
+        com.google.android.material.card.MaterialCardView card = new com.google.android.material.card.MaterialCardView(
+                activity);
         LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT);
-        cardParams.setMargins(padding, padding, padding, (int)(density * 8));
+        cardParams.setMargins(padding, padding, padding, (int) (density * 8));
         card.setLayoutParams(cardParams);
         card.setCardElevation(density * 2);
         card.setRadius(density * 12);
-        
+
         // Inner layout
         LinearLayout innerLayout = new LinearLayout(activity);
         innerLayout.setOrientation(LinearLayout.VERTICAL);
         innerLayout.setPadding(padding, padding, padding, padding);
-        
+
         // Title
         TextView titleView = new TextView(activity);
         titleView.setText("Target Chipset");
         titleView.setTextSize(12);
         titleView.setAlpha(0.6f);
-        titleView.setPadding(0, 0, 0, (int)(density * 8));
+        titleView.setPadding(0, 0, 0, (int) (density * 8));
         innerLayout.addView(titleView);
-        
+
         // Current chipset display with click to change
         LinearLayout chipsetRow = new LinearLayout(activity);
         chipsetRow.setOrientation(LinearLayout.HORIZONTAL);
         chipsetRow.setGravity(android.view.Gravity.CENTER_VERTICAL);
         chipsetRow.setClickable(true);
         chipsetRow.setFocusable(true);
-        
+
         // Set ripple effect
         android.content.res.TypedArray typedArray = activity.getTheme().obtainStyledAttributes(
-                new int[]{android.R.attr.selectableItemBackground});
+                new int[] { android.R.attr.selectableItemBackground });
         int selectableItemBackground = typedArray.getResourceId(0, 0);
         typedArray.recycle();
         chipsetRow.setBackgroundResource(selectableItemBackground);
-        chipsetRow.setPadding((int)(density * 12), (int)(density * 12), 
-                (int)(density * 12), (int)(density * 12));
-        
+        chipsetRow.setPadding((int) (density * 12), (int) (density * 12),
+                (int) (density * 12), (int) (density * 12));
+
         // Chipset icon (Material Design)
         ImageView chipIcon = new ImageView(activity);
         chipIcon.setImageResource(R.drawable.ic_developer_board);
-        int iconSize = (int)(density * 24);
+        int iconSize = (int) (density * 24);
         LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams(iconSize, iconSize);
-        iconParams.setMarginEnd((int)(density * 12));
+        iconParams.setMarginEnd((int) (density * 12));
         chipIcon.setLayoutParams(iconParams);
         chipIcon.setColorFilter(MaterialColors.getColor(chipIcon,
                 com.google.android.material.R.attr.colorOnSurface));
         chipsetRow.addView(chipIcon);
-        
+
         // Chipset name
         TextView chipsetName = new TextView(activity);
-    KonaBessCore.Dtb currentDtb = KonaBessCore.getCurrentDtb();
+        KonaBessCore.Dtb currentDtb = KonaBessCore.getCurrentDtb();
         if (currentDtb != null) {
-            chipsetName.setText(currentDtb.id + " " + 
+            chipsetName.setText(currentDtb.id + " " +
                     ChipInfo.name2chipdesc(currentDtb.type, activity));
         } else {
             chipsetName.setText("Unknown");
@@ -1665,7 +1593,7 @@ public class GpuTableEditor {
                 0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
         chipsetName.setLayoutParams(nameParams);
         chipsetRow.addView(chipsetName);
-        
+
         // Settings/Change icon (Material Design)
         ImageView changeIcon = new ImageView(activity);
         changeIcon.setImageResource(R.drawable.ic_tune);
@@ -1675,40 +1603,40 @@ public class GpuTableEditor {
         changeIcon.setColorFilter(MaterialColors.getColor(changeIcon,
                 com.google.android.material.R.attr.colorOnSurfaceVariant));
         chipsetRow.addView(changeIcon);
-        
+
         // Click listener to show chipset selector dialog
         chipsetRow.setOnClickListener(v -> showChipsetSelectorDialog(activity, page, chipsetName));
-        
+
         innerLayout.addView(chipsetRow);
         card.addView(innerLayout);
-        
+
         return card;
     }
-    
-    private static void showChipsetSelectorDialog(Activity activity, LinearLayout page, 
-                                                   TextView chipsetNameView) {
+
+    private static void showChipsetSelectorDialog(Activity activity, LinearLayout page,
+            TextView chipsetNameView) {
         if (KonaBessCore.dtbs == null || KonaBessCore.dtbs.isEmpty()) {
             Toast.makeText(activity, "No chipsets available", Toast.LENGTH_SHORT).show();
             return;
         }
-        
+
         KonaBessCore.Dtb currentDtb = KonaBessCore.getCurrentDtb();
         int currentDtbIndex = KonaBessCore.getDtbIndex();
-        
+
         // Inflate custom modern dialog layout
         View dialogView = LayoutInflater.from(activity).inflate(R.layout.dialog_chipset_selector, null);
-        
+
         // Setup RecyclerView
         RecyclerView recyclerView = dialogView.findViewById(R.id.chipset_list);
         recyclerView.setLayoutManager(new LinearLayoutManager(activity));
         recyclerView.setHasFixedSize(true);
-        
+
         // Create dialog
         AlertDialog dialog = new MaterialAlertDialogBuilder(activity)
                 .setView(dialogView)
                 .setNegativeButton(activity.getString(R.string.cancel), null)
                 .create();
-        
+
         // Setup adapter with click listener
         ChipsetSelectorAdapter adapter = new ChipsetSelectorAdapter(
                 KonaBessCore.dtbs,
@@ -1731,24 +1659,23 @@ public class GpuTableEditor {
                         // Same chipset, just close dialog
                         dialog.dismiss();
                     }
-                }
-        );
-        
+                });
+
         recyclerView.setAdapter(adapter);
-        
+
         // Show dialog with rounded corners
         if (dialog.getWindow() != null) {
             dialog.getWindow().setBackgroundDrawableResource(R.drawable.dialog_background);
         }
-        
+
         dialog.show();
     }
-    
-    private static void switchChipset(Activity activity, LinearLayout page, 
-                                      KonaBessCore.Dtb newDtb, TextView chipsetNameView) {
+
+    private static void switchChipset(Activity activity, LinearLayout page,
+            KonaBessCore.Dtb newDtb, TextView chipsetNameView) {
         AlertDialog waiting = DialogUtil.getWaitDialog(activity, R.string.getting_freq_table);
         waiting.show();
-        
+
         new Thread(() -> {
             try {
                 KonaBessCore.Dtb previous = KonaBessCore.getCurrentDtb();
@@ -1758,7 +1685,7 @@ public class GpuTableEditor {
 
                 // Switch to new chipset
                 KonaBessCore.chooseTarget(newDtb, activity);
-                
+
                 boolean restored = restoreSession(newDtb.id);
                 Integer targetBinIndex = restored ? currentBinIndex : null;
                 Integer targetLevelIndex = restored ? currentLevelIndex : null;
@@ -1770,15 +1697,15 @@ public class GpuTableEditor {
                     resetEditorState();
                     saveCurrentSession();
                 }
-                
+
                 final boolean restoredSession = restored;
                 activity.runOnUiThread(() -> {
                     waiting.dismiss();
-                    
+
                     // Update chipset name in card
-                    chipsetNameView.setText(newDtb.id + " " + 
+                    chipsetNameView.setText(newDtb.id + " " +
                             ChipInfo.name2chipdesc(newDtb.type, activity));
-                    
+
                     // Regenerate bins view
                     try {
                         refreshDirtyStateFromSignature();
@@ -1793,7 +1720,7 @@ public class GpuTableEditor {
                             } catch (Exception ignored) {
                             }
                         }
-                        Toast.makeText(activity, "Switched to chipset " + newDtb.id, 
+                        Toast.makeText(activity, "Switched to chipset " + newDtb.id,
                                 Toast.LENGTH_SHORT).show();
                     } catch (Exception e) {
                         DialogUtil.showError(activity, R.string.error_occur);
@@ -1832,7 +1759,7 @@ public class GpuTableEditor {
                 LinearLayout.LayoutParams.MATCH_PARENT));
 
         float density = activity.getResources().getDisplayMetrics().density;
-        
+
         // Add chipset selector card if multiple chipsets are available
         if (KonaBessCore.dtbs != null && KonaBessCore.dtbs.size() > 1) {
             mainLayout.addView(createChipsetSelectorCard(activity, page));
@@ -1876,7 +1803,7 @@ public class GpuTableEditor {
 
     private static View generateToolBar(Activity activity, LinearLayout showedView) {
         currentActivity = activity;
-        
+
         // Use non-scrollable LinearLayout with wrap to prevent horizontal scroll
         LinearLayout mainContainer = new LinearLayout(activity);
         mainContainer.setOrientation(LinearLayout.VERTICAL);
@@ -1905,8 +1832,8 @@ public class GpuTableEditor {
         // Save button reference and setup
         saveButtonRef = saveButton;
         updateSaveButtonAppearance();
-        saveButton.setOnClickListener(v ->
-            saveFrequencyTable(activity, true, activity.getString(R.string.history_manual_save)));
+        saveButton.setOnClickListener(
+                v -> saveFrequencyTable(activity, true, activity.getString(R.string.history_manual_save)));
 
         // Undo button setup
         undoButtonRef = undoButton;
@@ -1954,7 +1881,8 @@ public class GpuTableEditor {
         secondRow.setLayoutParams(secondRowParams);
 
         if (activity instanceof MainActivity && !ChipInfo.shouldIgnoreVoltTable(ChipInfo.which)) {
-            MaterialButton voltButton = createCompactChip(activity, R.string.edit_gpu_volt_table, R.drawable.ic_voltage);
+            MaterialButton voltButton = createCompactChip(activity, R.string.edit_gpu_volt_table,
+                    R.drawable.ic_voltage);
             voltButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -2005,7 +1933,7 @@ public class GpuTableEditor {
         chip.setIconGravity(MaterialButton.ICON_GRAVITY_TEXT_START);
 
         float density = activity.getResources().getDisplayMetrics().density;
-        
+
         // Compact sizing for modern chip design
         int iconSize = (int) (density * 18);
         int iconPadding = (int) (density * 4);
@@ -2015,7 +1943,7 @@ public class GpuTableEditor {
         chip.setIconSize(iconSize);
         chip.setIconPadding(iconPadding);
         chip.setPadding(horizontalPadding, verticalPadding, horizontalPadding, verticalPadding);
-        
+
         // Smaller text size for compact design
         chip.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 12);
 
@@ -2032,7 +1960,7 @@ public class GpuTableEditor {
         chip.setIconTint(ColorStateList.valueOf(foregroundColor));
         chip.setRippleColor(ColorStateList.valueOf(rippleColor));
         chip.setStrokeWidth(0);
-        
+
         // Rounded corners for modern chip look
         chip.setCornerRadius((int) (density * 20));
 
