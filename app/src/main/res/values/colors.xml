@@ -59,4 +59,6 @@
     <color name="md_theme_dark_onSurfaceVariant">#CAC4D0</color>
     
     <color name="md_theme_dark_outline">#938F99</color>
+    
+    <color name="icon_background">#FFFFFFFF</color>
 </resources>
