@@ -1031,6 +1031,7 @@ public class GpuTableEditor {
                     .setView(editText)
                     .setMessage(KonaBessStr.help(raw_name, activity))
                     .setPositiveButton(R.string.save, new DialogInterface.OnClickListener() {
+
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
                             try {
@@ -1058,9 +1059,8 @@ public class GpuTableEditor {
                                 DialogUtil.showError(activity, R.string.save_failed);
                             }
                         }
-                    })
-                    .setNegativeButton(R.string.cancel, null)
-                    .create().show();
+
+                    }).setNegativeButton(R.string.cancel, null).create().show();
         }
     }
 
@@ -1207,11 +1207,8 @@ public class GpuTableEditor {
     }
 
     public static boolean canAddNewLevel(int binID, Context context) throws Exception {
-        int max_levels = ChipInfo.which.maxTableLevels - ChipInfo.which.minLevelOffset;
-        if (bins.get(binID).levels.size() <= max_levels)
-            return true;
-        Toast.makeText(context, R.string.unable_add_more, Toast.LENGTH_SHORT).show();
-        return false;
+        // Limit removed as per user request
+        return true;
     }
 
     /**
@@ -1719,8 +1716,59 @@ public class GpuTableEditor {
         }).start();
     }
 
+    public static void restoreBackListener(Activity activity) {
+        if (!(activity instanceof MainActivity))
+            return;
+        MainActivity mainActivity = (MainActivity) activity;
+
+        if (currentPage == null) {
+            // Editor not active
+            return;
+        }
+
+        if (currentLevelIndex != null && currentBinIndex != null) {
+            // In a Frequency/Level Detail level
+            mainActivity.onBackPressedListener = new MainActivity.onBackPressedListener() {
+                @Override
+                public void onBackPressed() {
+                    try {
+                        generateLevels(activity, currentBinIndex, currentPage);
+                    } catch (Exception ignored) {
+                    }
+                }
+            };
+        } else if (currentBinIndex != null) {
+            // In a Bin level (Frequency Table)
+            mainActivity.onBackPressedListener = new MainActivity.onBackPressedListener() {
+
+                @Override
+                public void onBackPressed() {
+                    try {
+                        generateBins(activity, currentPage);
+                        mainActivity.updateGpuToolbarTitle(activity.getString(R.string.edit_freq_table));
+                    } catch (Exception ignored) {
+                    }
+                }
+            };
+        } else {
+            // Top level (Bin List)
+            // Original logic: ((MainActivity) activity).showMainView();
+            // But showMainView resets the whole activity layout.
+            // If the user is in a Fragment in ViewPager, triggering "showMainView" might
+            // re-instantiate everything.
+            // However, to be consistent with normal behavior, we restore it.
+            mainActivity.onBackPressedListener = new MainActivity.onBackPressedListener() {
+                @Override
+                public void onBackPressed() {
+                    ((MainActivity) activity).showMainView();
+                }
+            };
+        }
+    }
+
     private static void generateBins(Activity activity, LinearLayout page) throws Exception {
         ((MainActivity) activity).onBackPressedListener = new MainActivity.onBackPressedListener() {
+
             @Override
             public void onBackPressed() {
                 ((MainActivity) activity).showMainView();
@@ -1736,10 +1784,10 @@ public class GpuTableEditor {
         updateSaveButtonAppearance();
 
         // Create main vertical layout
-        LinearLayout mainLayout = new LinearLayout(activity);
+        LinearLayout mainLayout = new LinearLayout(
+                activity);
         mainLayout.setOrientation(LinearLayout.VERTICAL);
-        mainLayout.setLayoutParams(new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
+        mainLayout.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.MATCH_PARENT));
 
         float density = activity.getResources().getDisplayMetrics().density;
@@ -1885,6 +1933,7 @@ public class GpuTableEditor {
         if (activity instanceof MainActivity) {
             MaterialButton repackButton = createCompactChip(activity, R.string.repack_flash, R.drawable.ic_flash);
             repackButton.setOnClickListener(new View.OnClickListener() {
+
                 @Override
                 public void onClick(View v) {
                     ((MainActivity) activity).new repackLogic().start();

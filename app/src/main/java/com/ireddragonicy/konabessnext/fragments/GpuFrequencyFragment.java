@@ -57,6 +57,9 @@ public class GpuFrequencyFragment extends Fragment {
     public void onResume() {
         super.onResume();
         reloadIfNeeded();
+        if (KonaBessCore.isPrepared()) {
+            GpuTableEditor.restoreBackListener(getActivity());
+        }
     }
 
     public void markDataDirty() {
