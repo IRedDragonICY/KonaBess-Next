@@ -428,6 +428,11 @@ public class TableIO {
                 activity.getResources().getString(R.string.export_to_clipboard_msg),
                 canExport));
         items.add(new ActionCardAdapter.ActionItem(
+                R.drawable.ic_description,
+                activity.getResources().getString(R.string.export_raw_dts),
+                activity.getResources().getString(R.string.export_raw_dts_msg),
+                canExport));
+        items.add(new ActionCardAdapter.ActionItem(
                 R.drawable.ic_backup,
                 activity.getResources().getString(R.string.backup_image),
                 activity.getResources().getString(R.string.backup_image_desc),
@@ -466,6 +471,8 @@ public class TableIO {
                         }
                     });
                 } else if (position == 5) {
+                    MainActivity.runWithStoragePermission(activity, new exportRawDts(activity));
+                } else if (position == 6) {
                     MainActivity mainActivity = (MainActivity) activity;
 
                     // Backup path is now always in internal storage root
@@ -501,6 +508,62 @@ public class TableIO {
         page.addView(recyclerView, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT));
+    }
+
+    private static class exportRawDts extends Thread {
+        Activity activity;
+        boolean error;
+        String destPath;
+
+        public exportRawDts(Activity activity) {
+            this.activity = activity;
+        }
+
+        public void run() {
+            error = false;
+            String timestamp = new SimpleDateFormat("MMddHHmmss").format(new Date());
+            String filename = "konabess_export_" + timestamp + ".dts";
+            destPath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/" + filename;
+
+            File srcFile = new File(KonaBessCore.dts_path);
+
+            try {
+                // Use cat and shell to copy to ensure permissions are handled if helpful,
+                // but since source is ours and dest is sdcard (with permission), a simple copy
+                // might work.
+                // However, using the existing RootHelper pattern is consistent and safe for
+                // file operations.
+                String cmd = String.format("cat '%s' > '%s'", srcFile.getAbsolutePath(), destPath);
+                if (!RootHelper.execAndCheck(cmd)) {
+                    // Fallback to java IO if shell fails (unlikely given root usage elsewhere)
+                    copyFile(srcFile, new File(destPath));
+                }
+            } catch (Exception e) {
+                error = true;
+                e.printStackTrace();
+            }
+
+            activity.runOnUiThread(() -> {
+                if (!error) {
+                    Toast.makeText(activity,
+                            activity.getResources().getString(R.string.success_export_to) + " " + destPath,
+                            Toast.LENGTH_LONG).show();
+                } else {
+                    Toast.makeText(activity, R.string.failed_export, Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+
+        private void copyFile(File source, File dest) throws IOException {
+            try (java.io.InputStream is = new java.io.FileInputStream(source);
+                    java.io.OutputStream os = new java.io.FileOutputStream(dest)) {
+                byte[] buffer = new byte[1024];
+                int length;
+                while ((length = is.read(buffer)) > 0) {
+                    os.write(buffer, 0, length);
+                }
+            }
+        }
     }
 
     public static class TableIOLogic extends Thread {
