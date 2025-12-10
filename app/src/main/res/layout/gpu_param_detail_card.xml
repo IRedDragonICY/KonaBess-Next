@@ -53,6 +53,98 @@
                 android:layout_marginTop="4dp"
                 android:textColor="?attr/colorOnSurfaceVariant" />
 
+            <HorizontalScrollView
+                android:id="@+id/freq_buttons_scroll"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:scrollbars="none"
+                android:visibility="gone"
+                android:layout_marginTop="8dp">
+
+                <LinearLayout
+                    android:id="@+id/freq_buttons_container"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+                    <!-- Buttons will be added programmatically or could be hardcoded here.
+                         Hardcoding is better for preview but programmatically is fine too.
+                         Let's proper hardcode for simpler Adapter logic?
+                         No, repetitive XML. Let's start with container and add chunks?
+                         Actually, hardcoding 6 buttons in XML is verbose but safe. -->
+                    <Button
+                        style="@style/Widget.Material3.Button.OutlinedButton"
+                        android:id="@+id/btn_minus_20"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="-20"
+                        android:textSize="12sp"
+                        android:minWidth="0dp"
+                        android:minHeight="0dp"
+                        android:paddingStart="12dp"
+                        android:paddingEnd="12dp"
+                        android:layout_marginEnd="8dp"/>
+                    <Button
+                        style="@style/Widget.Material3.Button.OutlinedButton"
+                        android:id="@+id/btn_minus_10"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="-10"
+                        android:textSize="12sp"
+                        android:minWidth="0dp"
+                        android:minHeight="0dp"
+                        android:paddingStart="12dp"
+                        android:paddingEnd="12dp"
+                        android:layout_marginEnd="8dp"/>
+                    <Button
+                        style="@style/Widget.Material3.Button.OutlinedButton"
+                        android:id="@+id/btn_minus_5"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="-5"
+                        android:textSize="12sp"
+                        android:minWidth="0dp"
+                        android:minHeight="0dp"
+                        android:paddingStart="12dp"
+                        android:paddingEnd="12dp"
+                        android:layout_marginEnd="8dp"/>
+                    <Button
+                        style="@style/Widget.Material3.Button.OutlinedButton"
+                        android:id="@+id/btn_plus_5"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="+5"
+                        android:textSize="12sp"
+                        android:minWidth="0dp"
+                        android:minHeight="0dp"
+                        android:paddingStart="12dp"
+                        android:paddingEnd="12dp"
+                        android:layout_marginEnd="8dp"/>
+                    <Button
+                        style="@style/Widget.Material3.Button.OutlinedButton"
+                        android:id="@+id/btn_plus_10"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="+10"
+                        android:textSize="12sp"
+                        android:minWidth="0dp"
+                        android:minHeight="0dp"
+                        android:paddingStart="12dp"
+                        android:paddingEnd="12dp"
+                        android:layout_marginEnd="8dp"/>
+                    <Button
+                        style="@style/Widget.Material3.Button.OutlinedButton"
+                        android:id="@+id/btn_plus_20"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="+20"
+                        android:textSize="12sp"
+                        android:minWidth="0dp"
+                        android:minHeight="0dp"
+                        android:paddingStart="12dp"
+                        android:paddingEnd="12dp"/>
+                </LinearLayout>
+            </HorizontalScrollView>
+
         </LinearLayout>
 
         <ImageView

@@ -32,6 +32,7 @@ public class GpuParamDetailAdapter extends RecyclerView.Adapter<RecyclerView.Vie
         public int iconRes;
         public boolean isBackButton;
         public boolean isStatsGroup;
+        public boolean isFrequencyControl;
         public List<StatItem> statItems; // For grouped stats
         public int lineIndex = -1;
 
@@ -40,8 +41,10 @@ public class GpuParamDetailAdapter extends RecyclerView.Adapter<RecyclerView.Vie
             this.value = value;
             this.paramName = paramName;
             this.iconRes = iconRes;
+            this.iconRes = iconRes;
             this.isBackButton = false;
             this.isStatsGroup = false;
+            this.isFrequencyControl = false;
         }
 
         public ParamDetailItem(String title, int iconRes, boolean isBackButton) {
@@ -83,8 +86,12 @@ public class GpuParamDetailAdapter extends RecyclerView.Adapter<RecyclerView.Vie
 
     public interface OnItemClickListener {
         void onBackClicked();
+
         void onStatItemClicked(StatItem statItem);
+
         void onParamClicked(ParamDetailItem item);
+
+        void onFrequencyAdjust(ParamDetailItem item, int deltaMHz);
     }
 
     public GpuParamDetailAdapter(List<ParamDetailItem> items, Context context) {
@@ -133,12 +140,12 @@ public class GpuParamDetailAdapter extends RecyclerView.Adapter<RecyclerView.Vie
 
     private void bindStatsGroup(StatsGroupViewHolder holder, ParamDetailItem item) {
         // Clear previous stats
-    holder.statsRow.removeAllViews();
+        holder.statsRow.removeAllViews();
 
         // Add each stat card
         for (final StatItem stat : item.statItems) {
             View statCard = LayoutInflater.from(context).inflate(R.layout.gpu_param_stat_card, holder.statsRow, false);
-            
+
             ImageView icon = statCard.findViewById(R.id.stat_icon);
             TextView label = statCard.findViewById(R.id.stat_label);
             TextView value = statCard.findViewById(R.id.stat_value);
@@ -220,6 +227,53 @@ public class GpuParamDetailAdapter extends RecyclerView.Adapter<RecyclerView.Vie
                 }
             }
         });
+
+        // Frequency Buttons Logic
+        View buttonsScroll = holder.card.findViewById(R.id.freq_buttons_scroll);
+        if (buttonsScroll != null) {
+            if (item.isFrequencyControl) {
+                buttonsScroll.setVisibility(View.VISIBLE);
+
+                // Helper to set click listener
+                View.OnClickListener adjListener = new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        if (clickListener != null) {
+                            int delta = 0;
+                            int id = v.getId();
+                            if (id == R.id.btn_minus_20)
+                                delta = -20;
+                            else if (id == R.id.btn_minus_10)
+                                delta = -10;
+                            else if (id == R.id.btn_minus_5)
+                                delta = -5;
+                            else if (id == R.id.btn_plus_5)
+                                delta = 5;
+                            else if (id == R.id.btn_plus_10)
+                                delta = 10;
+                            else if (id == R.id.btn_plus_20)
+                                delta = 20;
+
+                            if (delta != 0) {
+                                clickListener.onFrequencyAdjust(item, delta);
+                            }
+                        }
+                    }
+                };
+
+                // Bind buttons
+                int[] btnIds = { R.id.btn_minus_20, R.id.btn_minus_10, R.id.btn_minus_5,
+                        R.id.btn_plus_5, R.id.btn_plus_10, R.id.btn_plus_20 };
+                for (int id : btnIds) {
+                    View btn = holder.card.findViewById(id);
+                    if (btn != null)
+                        btn.setOnClickListener(adjListener);
+                }
+
+            } else {
+                buttonsScroll.setVisibility(View.GONE);
+            }
+        }
     }
 
     @Override

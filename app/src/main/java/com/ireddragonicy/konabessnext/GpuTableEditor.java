@@ -892,6 +892,9 @@ public class GpuTableEditor {
                         paramValue,
                         paramName,
                         iconRes);
+                if (displayTitle.equals("GPU Frequency")) {
+                    paramItem.isFrequencyControl = true;
+                }
                 paramItem.lineIndex = lineIndex;
                 otherParams.add(paramItem);
             }
@@ -956,6 +959,41 @@ public class GpuTableEditor {
                             paramTitle);
                 } catch (Exception e) {
                     DialogUtil.showError(activity, R.string.error_occur);
+                }
+            }
+
+            @Override
+            public void onFrequencyAdjust(GpuParamDetailAdapter.ParamDetailItem item, int deltaMHz) {
+                try {
+                    int actualLineIndex = item.lineIndex;
+                    String line = bins.get(last).levels.get(levelid).lines.get(actualLineIndex);
+                    String raw_name = item.paramName;
+
+                    long currentVal = 0;
+                    if (DtsHelper.shouldUseHex(line)) {
+                        String hexVal = DtsHelper.decode_hex_line(line).value;
+                        currentVal = Long.parseLong(hexVal.replace("0x", ""), 16);
+                    } else {
+                        currentVal = DtsHelper.decode_int_line(line).value;
+                    }
+
+                    long newVal = currentVal + (deltaMHz * 1000000L);
+                    if (newVal < 0)
+                        newVal = 0;
+
+                    final String newValueStr = String.valueOf(newVal);
+                    final String encodedLine = DtsHelper.encodeIntOrHexLine(raw_name, newValueStr);
+
+                    final String freqLabel = SettingsActivity.formatFrequency(newVal, activity);
+
+                    applyChange(activity.getString(R.string.history_edit_parameter, "GPU Frequency", freqLabel),
+                            () -> bins.get(last).levels.get(levelid).lines.set(actualLineIndex, encodedLine));
+
+                    generateALevel(activity, last, levelid, page);
+
+                } catch (Exception e) {
+                    DialogUtil.showError(activity, R.string.save_failed);
+                    e.printStackTrace();
                 }
             }
         });
