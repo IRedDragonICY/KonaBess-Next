@@ -222,6 +222,14 @@
     <string name="confirm_delete_history_msg">This will delete the export file. This action cannot be undone.</string>
     <string name="history_cleared">History cleared</string>
     <string name="history_item_deleted">Export deleted</string>
+    <string name="rename">Rename</string>
+    <string name="rename_file">Rename File</string>
+    <string name="enter_new_filename">Enter new filename</string>
+    <string name="file_renamed">File renamed</string>
+    <string name="rename_failed">Rename failed</string>
+    <string name="edit_export">Edit Export</string>
+    <string name="edit_description">Description</string>
+    <string name="changes_saved">Changes saved</string>
     <string name="share_config">Share Configuration</string>
     <string name="applying_config">Applying configuration...</string>
     <string name="file_not_found">File not found</string>

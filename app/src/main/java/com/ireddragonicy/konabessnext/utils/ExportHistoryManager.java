@@ -29,22 +29,21 @@ public class ExportHistoryManager {
     // Add new export to history
     public void addExport(String filename, String description, String filePath, String chipType) {
         List<ExportHistoryItem> history = getHistory();
-        
+
         // Add new item
         ExportHistoryItem newItem = new ExportHistoryItem(
-            System.currentTimeMillis(),
-            filename,
-            description,
-            filePath,
-            chipType
-        );
+                System.currentTimeMillis(),
+                filename,
+                description,
+                filePath,
+                chipType);
         history.add(0, newItem); // Add to beginning
-        
+
         // Keep only MAX_HISTORY_ITEMS
         if (history.size() > MAX_HISTORY_ITEMS) {
             history = history.subList(0, MAX_HISTORY_ITEMS);
         }
-        
+
         saveHistory(history);
     }
 
@@ -52,13 +51,13 @@ public class ExportHistoryManager {
     public List<ExportHistoryItem> getHistory() {
         List<ExportHistoryItem> history = new ArrayList<>();
         String jsonString = prefs.getString(KEY_HISTORY, "[]");
-        
+
         try {
             JSONArray jsonArray = new JSONArray(jsonString);
             for (int i = 0; i < jsonArray.length(); i++) {
                 JSONObject json = jsonArray.getJSONObject(i);
                 ExportHistoryItem item = ExportHistoryItem.fromJSON(json);
-                
+
                 // Only add if file still exists
                 File file = new File(item.getFilePath());
                 if (file.exists()) {
@@ -68,7 +67,7 @@ public class ExportHistoryManager {
         } catch (JSONException e) {
             e.printStackTrace();
         }
-        
+
         return history;
     }
 
@@ -82,7 +81,7 @@ public class ExportHistoryManager {
                 e.printStackTrace();
             }
         }
-        
+
         prefs.edit().putString(KEY_HISTORY, jsonArray.toString()).apply();
     }
 
@@ -91,12 +90,24 @@ public class ExportHistoryManager {
         List<ExportHistoryItem> history = getHistory();
         history.removeIf(h -> h.getTimestamp() == item.getTimestamp());
         saveHistory(history);
-        
+
         // Delete the file if it exists
         File file = new File(item.getFilePath());
         if (file.exists()) {
             file.delete();
         }
+    }
+
+    // Update existing history item (for rename)
+    public void updateItem(ExportHistoryItem updatedItem) {
+        List<ExportHistoryItem> history = getHistory();
+        for (int i = 0; i < history.size(); i++) {
+            if (history.get(i).getTimestamp() == updatedItem.getTimestamp()) {
+                history.set(i, updatedItem);
+                break;
+            }
+        }
+        saveHistory(history);
     }
 
     // Clear all history

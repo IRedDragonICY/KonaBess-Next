@@ -252,6 +252,24 @@
                 android:paddingEnd="24dp" />
 
             <com.google.android.material.button.MaterialButton
+                android:id="@+id/history_btn_rename"
+                android:layout_width="42dp"
+                android:layout_height="42dp"
+                android:insetLeft="0dp"
+                android:insetTop="0dp"
+                android:insetRight="0dp"
+                android:insetBottom="0dp"
+                app:icon="@drawable/ic_edit"
+                app:iconSize="20dp"
+                app:iconGravity="textStart"
+                app:iconPadding="0dp"
+                app:iconTint="?attr/colorPrimary"
+                style="@style/Widget.Material3.Button.TextButton.Icon"
+                app:cornerRadius="12dp"
+                android:layout_marginStart="4dp"
+                android:contentDescription="@string/rename" />
+
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/history_btn_delete"
                 android:layout_width="42dp"
                 android:layout_height="42dp"

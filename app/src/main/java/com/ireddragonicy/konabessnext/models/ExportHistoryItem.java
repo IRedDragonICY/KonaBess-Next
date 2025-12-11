@@ -38,6 +38,18 @@ public class ExportHistoryItem {
         return chipType;
     }
 
+    public void setFilename(String filename) {
+        this.filename = filename;
+    }
+
+    public void setFilePath(String filePath) {
+        this.filePath = filePath;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
     // Convert to JSON for storage
     public JSONObject toJSON() throws JSONException {
         JSONObject json = new JSONObject();
@@ -52,11 +64,10 @@ public class ExportHistoryItem {
     // Create from JSON
     public static ExportHistoryItem fromJSON(JSONObject json) throws JSONException {
         return new ExportHistoryItem(
-            json.getLong("timestamp"),
-            json.getString("filename"),
-            json.getString("description"),
-            json.getString("filePath"),
-            json.optString("chipType", "Unknown")
-        );
+                json.getLong("timestamp"),
+                json.getString("filename"),
+                json.getString("description"),
+                json.getString("filePath"),
+                json.optString("chipType", "Unknown"));
     }
 }
