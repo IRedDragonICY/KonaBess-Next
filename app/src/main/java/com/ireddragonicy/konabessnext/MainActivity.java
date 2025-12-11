@@ -45,7 +45,7 @@ public class MainActivity extends AppCompatActivity {
 
     androidx.appcompat.app.AlertDialog waiting;
     boolean cross_device_debug = false;
-    onBackPressedListener onBackPressedListener = null;
+    public onBackPressedListener onBackPressedListener = null;
 
     private final Object preparationLock = new Object();
     private final ArrayList<DevicePreparationListener> preparationListeners = new ArrayList<>();

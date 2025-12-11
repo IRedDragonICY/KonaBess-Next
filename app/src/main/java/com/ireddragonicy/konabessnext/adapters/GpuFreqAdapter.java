@@ -35,7 +35,8 @@ public class GpuFreqAdapter extends RecyclerView.Adapter<GpuFreqAdapter.ViewHold
             BACK,
             ADD_TOP,
             ADD_BOTTOM,
-            DUPLICATE
+            DUPLICATE,
+            CURVE_EDITOR
         }
 
         public String title;
@@ -58,7 +59,8 @@ public class GpuFreqAdapter extends RecyclerView.Adapter<GpuFreqAdapter.ViewHold
             this.title = title;
             this.subtitle = subtitle;
             this.actionType = actionType;
-            this.isHeader = actionType == ActionType.BACK || actionType == ActionType.ADD_TOP;
+            this.isHeader = actionType == ActionType.BACK || actionType == ActionType.ADD_TOP
+                    || actionType == ActionType.CURVE_EDITOR;
             this.isFooter = actionType == ActionType.ADD_BOTTOM;
             this.originalPosition = -1;
             this.targetPosition = -1;
@@ -73,7 +75,8 @@ public class GpuFreqAdapter extends RecyclerView.Adapter<GpuFreqAdapter.ViewHold
         }
 
         public boolean isActionItem() {
-            return actionType == ActionType.ADD_TOP || actionType == ActionType.ADD_BOTTOM;
+            return actionType == ActionType.ADD_TOP || actionType == ActionType.ADD_BOTTOM
+                    || actionType == ActionType.CURVE_EDITOR;
         }
 
         public boolean isDuplicateItem() {
@@ -305,7 +308,8 @@ public class GpuFreqAdapter extends RecyclerView.Adapter<GpuFreqAdapter.ViewHold
             holder.dragHandle.setVisibility(View.VISIBLE);
             holder.dragHandle.setImageResource(item.actionType == FreqItem.ActionType.ADD_TOP
                     ? R.drawable.ic_arrow_upward
-                    : R.drawable.ic_arrow_downward);
+                    : (item.actionType == FreqItem.ActionType.CURVE_EDITOR ? R.drawable.ic_frequency
+                            : R.drawable.ic_arrow_downward));
             holder.dragHandle.setImageTintList(ColorStateList.valueOf(onContainer));
             holder.deleteIcon.setVisibility(View.GONE);
             holder.copyButton.setVisibility(View.GONE);
@@ -376,7 +380,8 @@ public class GpuFreqAdapter extends RecyclerView.Adapter<GpuFreqAdapter.ViewHold
             }
         });
 
-        // Drag is now handled by long-pressing anywhere on the card (ItemTouchHelperCallback)
+        // Drag is now handled by long-pressing anywhere on the card
+        // (ItemTouchHelperCallback)
     }
 
     @Override

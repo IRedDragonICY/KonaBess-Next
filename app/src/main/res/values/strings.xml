@@ -232,4 +232,5 @@
     <string name="title_select_chipset">Select Chipset</string>
     <string name="export_raw_dts">Export Raw DTS</string>
     <string name="export_raw_dts_msg">Export the currently edited Device Tree Source file to storage</string>
+    <string name="gpu_curve_editor_title">Curve Editor</string>
 </resources>

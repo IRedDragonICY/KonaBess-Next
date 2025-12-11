@@ -1,6 +1,7 @@
 package com.ireddragonicy.konabessnext;
 
 import android.app.Activity;
+import java.util.concurrent.CopyOnWriteArrayList;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.res.ColorStateList;
@@ -58,24 +59,24 @@ import com.ireddragonicy.konabessnext.utils.DtsHelper;
 import com.ireddragonicy.konabessnext.utils.ItemTouchHelperCallback;
 
 public class GpuTableEditor {
-    private static int bin_position;
-    private static ArrayList<bin> bins;
+    public static int bin_position;
+    public static ArrayList<bin> bins;
 
-    private static class bin {
-        int id;
-        ArrayList<String> header;
-        ArrayList<level> levels;
+    public static class bin {
+        public int id;
+        public ArrayList<String> header;
+        public ArrayList<level> levels;
     }
 
-    private static class level {
-        ArrayList<String> lines;
+    public static class level {
+        public ArrayList<String> lines;
     }
 
     private static ArrayList<String> lines_in_dts;
 
     private static final int MAX_HISTORY_SIZE = 50;
-    private static final Deque<EditorState> undoStack = new ArrayDeque<>();
-    private static final Deque<EditorState> redoStack = new ArrayDeque<>();
+    public static final Deque<EditorState> undoStack = new ArrayDeque<>();
+    public static final Deque<EditorState> redoStack = new ArrayDeque<>();
     private static final ArrayList<String> changeHistory = new ArrayList<>();
     private static final Map<Integer, EditorSession> sessionCache = new HashMap<>();
 
@@ -84,6 +85,29 @@ public class GpuTableEditor {
     private static Integer currentBinIndex = null;
     private static Integer currentLevelIndex = null;
 
+    public interface OnHistoryStateChangedListener {
+        void onHistoryStateChanged(boolean canUndo, boolean canRedo);
+    }
+
+    private static final java.util.List<OnHistoryStateChangedListener> historyListeners = new CopyOnWriteArrayList<>();
+
+    public static void addHistoryListener(OnHistoryStateChangedListener listener) {
+        if (listener != null && !historyListeners.contains(listener)) {
+            historyListeners.add(listener);
+            // Immediate update
+            listener.onHistoryStateChanged(!undoStack.isEmpty(), !redoStack.isEmpty());
+        }
+    }
+
+    public static void removeHistoryListener(OnHistoryStateChangedListener listener) {
+        historyListeners.remove(listener);
+    }
+
+    // Maintain old refs for a moment or remove?
+    // User wants "Top Professional". Obsolete static refs are bad.
+    // But I must ensure I don't break existing code if I don't refactor everything
+    // at once.
+    // I will keep them but Deprecate usage.
     private static MaterialButton saveButtonRef;
     private static MaterialButton undoButtonRef;
     private static MaterialButton redoButtonRef;
@@ -123,7 +147,7 @@ public class GpuTableEditor {
         }
     }
 
-    private static class EditorState {
+    public static class EditorState {
         ArrayList<String> linesInDts;
         ArrayList<bin> binsSnapshot;
         int binPosition;
@@ -422,7 +446,7 @@ public class GpuTableEditor {
         }
     }
 
-    private static EditorState captureState() {
+    public static EditorState captureState() {
         EditorState state = new EditorState();
         state.linesInDts = new ArrayList<>(lines_in_dts);
         state.binsSnapshot = cloneBinsList(bins);
@@ -588,19 +612,33 @@ public class GpuTableEditor {
         });
     }
 
-    private static void updateUndoRedoButtons() {
-        runOnMainThread(() -> {
-            if (undoButtonRef != null) {
-                boolean enabled = !undoStack.isEmpty();
-                undoButtonRef.setEnabled(enabled);
-                undoButtonRef.setAlpha(enabled ? 1f : 0.5f);
-            }
-            if (redoButtonRef != null) {
-                boolean enabled = !redoStack.isEmpty();
-                redoButtonRef.setEnabled(enabled);
-                redoButtonRef.setAlpha(enabled ? 1f : 0.5f);
-            }
-        });
+    public static void updateUndoRedoButtons() {
+        boolean canUndo = !undoStack.isEmpty();
+        boolean canRedo = !redoStack.isEmpty();
+
+        // Notify all listeners (Modular approach)
+        for (OnHistoryStateChangedListener listener : historyListeners) {
+            listener.onHistoryStateChanged(canUndo, canRedo);
+        }
+
+        // Legacy support (Direct View manipulation) - Deprecate but keep for
+        // safety/transitions
+        if (undoButtonRef != null && currentActivity != null) {
+            currentActivity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        undoButtonRef.setEnabled(canUndo);
+                        undoButtonRef.setAlpha(canUndo ? 1.0f : 0.5f);
+
+                        redoButtonRef.setEnabled(canRedo);
+                        redoButtonRef.setAlpha(canRedo ? 1.0f : 0.5f);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
+        }
     }
 
     private static void updateHistoryButtonLabel() {
@@ -638,11 +676,11 @@ public class GpuTableEditor {
     }
 
     @FunctionalInterface
-    private interface EditorChange {
+    public interface EditorChange {
         void run() throws Exception;
     }
 
-    private static void applyChange(String description, EditorChange change) throws Exception {
+    public static void applyChange(String description, EditorChange change) throws Exception {
         EditorState snapshot = captureState();
         change.run();
         pushUndoState(snapshot);
@@ -671,7 +709,7 @@ public class GpuTableEditor {
         }
     }
 
-    private static boolean saveFrequencyTable(Context context, boolean showToast, String historyMessage) {
+    public static boolean saveFrequencyTable(Context context, boolean showToast, String historyMessage) {
         try {
             writeOut(genBack(genTable()));
             markStateSaved();
@@ -748,7 +786,7 @@ public class GpuTableEditor {
         }
     }
 
-    private static void handleUndo() {
+    public static void handleUndo() {
         if (undoStack.isEmpty()) {
             return;
         }
@@ -767,7 +805,7 @@ public class GpuTableEditor {
         }
     }
 
-    private static void handleRedo() {
+    public static void handleRedo() {
         if (redoStack.isEmpty()) {
             return;
         }
@@ -786,7 +824,7 @@ public class GpuTableEditor {
         }
     }
 
-    private static void showHistoryDialog(Activity activity) {
+    public static void showHistoryDialog(Activity activity) {
         if (activity == null) {
             return;
         }
@@ -1295,6 +1333,12 @@ public class GpuTableEditor {
                 activity.getResources().getString(R.string.add_freq_top_desc),
                 GpuFreqAdapter.FreqItem.ActionType.ADD_TOP));
 
+        // Curve Editor button (header)
+        items.add(new GpuFreqAdapter.FreqItem(
+                activity.getResources().getString(R.string.gpu_curve_editor_title),
+                "Edit frequency curve for this bin",
+                GpuFreqAdapter.FreqItem.ActionType.CURVE_EDITOR));
+
         // Add all frequency levels
         for (int i = 0; i < bins.get(id).levels.size(); i++) {
             level level = bins.get(id).levels.get(i);
@@ -1405,6 +1449,36 @@ public class GpuTableEditor {
                         DialogUtil.showError(activity, R.string.error_occur);
                     }
                     return;
+                case CURVE_EDITOR:
+                    com.ireddragonicy.konabessnext.fragments.GpuCurveEditorFragment fragment = new com.ireddragonicy.konabessnext.fragments.GpuCurveEditorFragment();
+                    android.os.Bundle args = new android.os.Bundle();
+                    args.putInt("binId", id);
+                    fragment.setArguments(args);
+
+                    // Add back stack listener to refresh list when returning from Curve Editor
+                    final int currentBackStackCount = mainActivity.getSupportFragmentManager().getBackStackEntryCount();
+                    mainActivity.getSupportFragmentManager().addOnBackStackChangedListener(
+                            new androidx.fragment.app.FragmentManager.OnBackStackChangedListener() {
+                                @Override
+                                public void onBackStackChanged() {
+                                    int newCount = mainActivity.getSupportFragmentManager().getBackStackEntryCount();
+                                    if (newCount < currentBackStackCount + 1) {
+                                        // Curve Editor was popped, refresh the frequency list
+                                        mainActivity.getSupportFragmentManager().removeOnBackStackChangedListener(this);
+                                        try {
+                                            generateLevels(activity, id, page);
+                                        } catch (Exception ignored) {
+                                        }
+                                    }
+                                }
+                            });
+
+                    mainActivity.getSupportFragmentManager()
+                            .beginTransaction()
+                            .replace(android.R.id.content, fragment)
+                            .addToBackStack("curve_editor")
+                            .commit();
+                    return;
                 case BACK:
                     try {
                         generateBins(activity, page);
@@ -1459,7 +1533,7 @@ public class GpuTableEditor {
                 return;
             }
 
-            final int levelPosition = position - 2; // Adjust for header items
+            final int levelPosition = position - 3; // Adjust for header items (BACK, ADD_TOP, CURVE_EDITOR)
             try {
                 final long freqValue = getFrequencyFromLevel(bins.get(id).levels.get(levelPosition));
                 final String freqLabel = SettingsActivity.formatFrequency(freqValue, activity);
@@ -1871,132 +1945,16 @@ public class GpuTableEditor {
                 LinearLayout.LayoutParams.MATCH_PARENT));
     }
 
-    private static View generateToolBar(Activity activity, LinearLayout showedView) {
+    public static View generateToolBar(Activity activity, LinearLayout showedView) {
         currentActivity = activity;
-
-        // Use non-scrollable LinearLayout with wrap to prevent horizontal scroll
-        LinearLayout mainContainer = new LinearLayout(activity);
-        mainContainer.setOrientation(LinearLayout.VERTICAL);
-        mainContainer.setLayoutParams(new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT));
-
-        float density = activity.getResources().getDisplayMetrics().density;
-        int padding = (int) (density * 12);
-        int chipSpacing = (int) (density * 8);
-        mainContainer.setPadding(padding, padding, padding, padding / 2);
-
-        // First row: Save, Undo, Redo, History
-        LinearLayout firstRow = new LinearLayout(activity);
-        firstRow.setOrientation(LinearLayout.HORIZONTAL);
-        firstRow.setLayoutParams(new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT));
-
-        // Create compact chip buttons for first row
-        MaterialButton saveButton = createCompactChip(activity, R.string.save_freq_table, R.drawable.ic_file_upload);
-        MaterialButton undoButton = createCompactChip(activity, R.string.undo, R.drawable.ic_undo);
-        MaterialButton redoButton = createCompactChip(activity, R.string.redo, R.drawable.ic_redo);
-        MaterialButton historyButton = createCompactChip(activity, R.string.history, R.drawable.ic_history);
-
-        // Save button reference and setup
-        saveButtonRef = saveButton;
-        updateSaveButtonAppearance();
-        saveButton.setOnClickListener(
-                v -> saveFrequencyTable(activity, true, activity.getString(R.string.history_manual_save)));
-
-        // Undo button setup
-        undoButtonRef = undoButton;
-        undoButton.setOnClickListener(v -> handleUndo());
-
-        // Redo button setup
-        redoButtonRef = redoButton;
-        redoButton.setOnClickListener(v -> handleRedo());
-
-        // History button setup
-        historyButtonRef = historyButton;
-        historyButton.setOnClickListener(v -> showHistoryDialog(activity));
-        updateHistoryButtonLabel();
-        updateUndoRedoButtons();
-
-        // Add buttons to first row with equal weight
-        LinearLayout.LayoutParams chipParams = new LinearLayout.LayoutParams(
-                0, LinearLayout.LayoutParams.WRAP_CONTENT, 1.0f);
-        chipParams.setMargins(0, 0, chipSpacing, 0);
-
-        saveButton.setLayoutParams(chipParams);
-        firstRow.addView(saveButton);
-
-        undoButton.setLayoutParams(chipParams);
-        firstRow.addView(undoButton);
-
-        redoButton.setLayoutParams(chipParams);
-        firstRow.addView(redoButton);
-
-        LinearLayout.LayoutParams lastChipParams = new LinearLayout.LayoutParams(
-                0, LinearLayout.LayoutParams.WRAP_CONTENT, 1.0f);
-        historyButton.setLayoutParams(lastChipParams);
-        firstRow.addView(historyButton);
-
-        mainContainer.addView(firstRow);
-
-        // Second row: Volt and Repack (if applicable)
-        boolean hasSecondRow = false;
-        LinearLayout secondRow = new LinearLayout(activity);
-        secondRow.setOrientation(LinearLayout.HORIZONTAL);
-        LinearLayout.LayoutParams secondRowParams = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT);
-        secondRowParams.setMargins(0, chipSpacing, 0, 0);
-        secondRow.setLayoutParams(secondRowParams);
-
-        if (activity instanceof MainActivity && !ChipInfo.which.ignoreVoltTable) {
-            MaterialButton voltButton = createCompactChip(activity, R.string.edit_gpu_volt_table,
-                    R.drawable.ic_voltage);
-            voltButton.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    new GpuVoltEditor.gpuVoltLogic((MainActivity) activity, showedView).start();
-                }
-            });
-
-            LinearLayout.LayoutParams voltParams = new LinearLayout.LayoutParams(
-                    0, LinearLayout.LayoutParams.WRAP_CONTENT, 1.0f);
-            voltParams.setMargins(0, 0, chipSpacing, 0);
-            voltButton.setLayoutParams(voltParams);
-            secondRow.addView(voltButton);
-            hasSecondRow = true;
-        }
-
-        if (activity instanceof MainActivity) {
-            MaterialButton repackButton = createCompactChip(activity, R.string.repack_flash, R.drawable.ic_flash);
-            repackButton.setOnClickListener(new View.OnClickListener() {
-
-                @Override
-                public void onClick(View v) {
-                    ((MainActivity) activity).new repackLogic().start();
-                }
-            });
-
-            LinearLayout.LayoutParams repackParams = new LinearLayout.LayoutParams(
-                    0, LinearLayout.LayoutParams.WRAP_CONTENT, 1.0f);
-            if (!hasSecondRow) {
-                // If this is the first button in second row
-                repackParams.setMargins(0, 0, chipSpacing, 0);
-            }
-            repackButton.setLayoutParams(repackParams);
-            secondRow.addView(repackButton);
-            hasSecondRow = true;
-        }
-
-        if (hasSecondRow) {
-            mainContainer.addView(secondRow);
-        }
-
-        return mainContainer;
+        com.ireddragonicy.konabessnext.widget.GpuActionToolbar toolbar = new com.ireddragonicy.konabessnext.widget.GpuActionToolbar(
+                activity);
+        toolbar.setParentViewForVolt(showedView);
+        toolbar.build(activity);
+        return toolbar;
     }
 
-    private static MaterialButton createCompactChip(Activity activity, int textRes, int iconRes) {
+    public static MaterialButton createCompactChip(Activity activity, int textRes, int iconRes) {
         MaterialButton chip = new MaterialButton(activity);
         chip.setAllCaps(false);
         chip.setText(textRes);
