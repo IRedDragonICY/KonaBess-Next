@@ -14,6 +14,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
@@ -89,6 +90,20 @@ public class GpuCurveEditorFragment extends Fragment implements GpuTableEditor.O
 
         // Register for history changes to refresh chart on Undo/Redo
         GpuTableEditor.addHistoryListener(this);
+
+        // Register OnBackPressedCallback for gesture navigation
+        // This handles the edge swipe back gesture properly
+        requireActivity().getOnBackPressedDispatcher().addCallback(
+                getViewLifecycleOwner(),
+                new OnBackPressedCallback(true) {
+                    @Override
+                    public void handleOnBackPressed() {
+                        // Pop this fragment from backstack
+                        if (getParentFragmentManager().getBackStackEntryCount() > 0) {
+                            getParentFragmentManager().popBackStack();
+                        }
+                    }
+                });
     }
 
     @Override

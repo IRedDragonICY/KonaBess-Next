@@ -19,6 +19,7 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AlertDialog;
 
 import com.google.android.material.button.MaterialButton;
@@ -824,6 +825,63 @@ public class GpuTableEditor {
         }
     }
 
+    /**
+     * Handles back navigation from the OnBackPressedDispatcher callback.
+     * Navigates up the hierarchy: Param Detail → Levels → Bins → (disable callback,
+     * let system handle)
+     */
+    public static void handleBackNavigation() {
+        if (currentActivity == null || currentPage == null) {
+            return;
+        }
+        try {
+            if (currentLevelIndex != null && currentBinIndex != null) {
+                // In Param Detail level → go back to Levels list
+                generateLevels(currentActivity, currentBinIndex, currentPage);
+            } else if (currentBinIndex != null) {
+                // In Levels list → go back to Bins list
+                generateBins(currentActivity, currentPage);
+                ((MainActivity) currentActivity).updateGpuToolbarTitle(
+                        currentActivity.getString(R.string.edit_freq_table));
+            } else {
+                // At root Bins level → disable callback, let system handle back
+                disableBackCallback();
+                // Trigger actual back navigation (will exit fragment/activity)
+                if (currentActivity instanceof MainActivity) {
+                    ((MainActivity) currentActivity).getOnBackPressedDispatcher().onBackPressed();
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Enables the GpuTableEditor back callback in MainActivity.
+     * Called when navigating into sub-levels (Levels, Param Details).
+     */
+    private static void enableBackCallback() {
+        if (currentActivity instanceof MainActivity) {
+            OnBackPressedCallback callback = ((MainActivity) currentActivity).getGpuTableEditorBackCallback();
+            if (callback != null) {
+                callback.setEnabled(true);
+            }
+        }
+    }
+
+    /**
+     * Disables the GpuTableEditor back callback in MainActivity.
+     * Called when at root level or when fragment should handle back.
+     */
+    private static void disableBackCallback() {
+        if (currentActivity instanceof MainActivity) {
+            OnBackPressedCallback callback = ((MainActivity) currentActivity).getGpuTableEditorBackCallback();
+            if (callback != null) {
+                callback.setEnabled(false);
+            }
+        }
+    }
+
     public static void showHistoryDialog(Activity activity) {
         if (activity == null) {
             return;
@@ -857,15 +915,8 @@ public class GpuTableEditor {
 
     private static void generateALevel(Activity activity, int last, int levelid,
             LinearLayout page) throws Exception {
-        ((MainActivity) activity).onBackPressedListener = new MainActivity.onBackPressedListener() {
-            @Override
-            public void onBackPressed() {
-                try {
-                    generateLevels(activity, last, page);
-                } catch (Exception ignored) {
-                }
-            }
-        };
+        // Enable callback for back navigation (Param Detail → Levels)
+        enableBackCallback();
 
         currentActivity = activity;
         currentPage = page;
@@ -1300,16 +1351,8 @@ public class GpuTableEditor {
         mainActivity.updateGpuToolbarTitle(activity.getString(R.string.edit_freq_table)
                 + " - " + KonaBessStr.convert_bins(bins.get(id).id, activity));
 
-        mainActivity.onBackPressedListener = new MainActivity.onBackPressedListener() {
-            @Override
-            public void onBackPressed() {
-                try {
-                    generateBins(activity, page);
-                    mainActivity.updateGpuToolbarTitle(activity.getString(R.string.edit_freq_table));
-                } catch (Exception ignored) {
-                }
-            }
-        };
+        // Enable callback for back navigation (Levels → Bins)
+        enableBackCallback();
 
         currentActivity = activity;
         currentPage = page;
@@ -1450,8 +1493,8 @@ public class GpuTableEditor {
                     }
                     return;
                 case CURVE_EDITOR:
-                    // Clear the back listener so fragment back stack handles navigation
-                    mainActivity.onBackPressedListener = null;
+                    // Disable callback so fragment back stack handles navigation
+                    disableBackCallback();
 
                     com.ireddragonicy.konabessnext.fragments.GpuCurveEditorFragment fragment = new com.ireddragonicy.konabessnext.fragments.GpuCurveEditorFragment();
                     android.os.Bundle args = new android.os.Bundle();
@@ -1834,61 +1877,28 @@ public class GpuTableEditor {
     public static void restoreBackListener(Activity activity) {
         if (!(activity instanceof MainActivity))
             return;
-        MainActivity mainActivity = (MainActivity) activity;
 
         if (currentPage == null) {
             // Editor not active
             return;
         }
 
+        // Simply enable/disable callback based on current navigation depth
         if (currentLevelIndex != null && currentBinIndex != null) {
             // In a Frequency/Level Detail level
-            mainActivity.onBackPressedListener = new MainActivity.onBackPressedListener() {
-                @Override
-                public void onBackPressed() {
-                    try {
-                        generateLevels(activity, currentBinIndex, currentPage);
-                    } catch (Exception ignored) {
-                    }
-                }
-            };
+            enableBackCallback();
         } else if (currentBinIndex != null) {
             // In a Bin level (Frequency Table)
-            mainActivity.onBackPressedListener = new MainActivity.onBackPressedListener() {
-
-                @Override
-                public void onBackPressed() {
-                    try {
-                        generateBins(activity, currentPage);
-                        mainActivity.updateGpuToolbarTitle(activity.getString(R.string.edit_freq_table));
-                    } catch (Exception ignored) {
-                    }
-                }
-            };
+            enableBackCallback();
         } else {
-            // Top level (Bin List)
-            // Original logic: ((MainActivity) activity).showMainView();
-            // But showMainView resets the whole activity layout.
-            // If the user is in a Fragment in ViewPager, triggering "showMainView" might
-            // re-instantiate everything.
-            // However, to be consistent with normal behavior, we restore it.
-            mainActivity.onBackPressedListener = new MainActivity.onBackPressedListener() {
-                @Override
-                public void onBackPressed() {
-                    ((MainActivity) activity).showMainView();
-                }
-            };
+            // Top level (Bin List) - disable so system handles back
+            disableBackCallback();
         }
     }
 
     private static void generateBins(Activity activity, LinearLayout page) throws Exception {
-        ((MainActivity) activity).onBackPressedListener = new MainActivity.onBackPressedListener() {
-
-            @Override
-            public void onBackPressed() {
-                ((MainActivity) activity).showMainView();
-            }
-        };
+        // At root level, disable callback so system handles back (exit/home)
+        disableBackCallback();
 
         currentActivity = activity;
         currentPage = page;

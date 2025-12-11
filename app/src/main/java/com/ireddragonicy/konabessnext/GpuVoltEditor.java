@@ -57,15 +57,15 @@ public class GpuVoltEditor {
         } else {
             lines_in_dts = new ArrayList<>();
         }
-        
+
         if (opps != null) {
             opps.clear();
         } else {
             opps = new ArrayList<>();
         }
-        
+
         opp_position = -1;
-        
+
         BufferedReader bufferedReader = null;
         try {
             bufferedReader = new BufferedReader(new FileReader(new File(KonaBessCore.dts_path)));
@@ -118,7 +118,8 @@ public class GpuVoltEditor {
                     bracket++;
                     continue;
                 }
-            } else if (ChipInfo.which == ChipInfo.type.lito_v1 || ChipInfo.which == ChipInfo.type.lito_v2 || ChipInfo.which == ChipInfo.type.lagoon) {
+            } else if (ChipInfo.which == ChipInfo.type.lito_v1 || ChipInfo.which == ChipInfo.type.lito_v2
+                    || ChipInfo.which == ChipInfo.type.lagoon) {
                 if (line.contains("gpu-opp-table {")) {
                     isInGpuTable = true;
                     bracket++;
@@ -170,7 +171,7 @@ public class GpuVoltEditor {
 
     public static void writeOut(List<String> new_dts) throws IOException {
         File file = new File(KonaBessCore.dts_path);
-        
+
         // If file exists, delete it first to avoid permission issues
         if (file.exists()) {
             if (!file.delete()) {
@@ -179,16 +180,16 @@ public class GpuVoltEditor {
                 file.delete();
             }
         }
-        
+
         // Create new file
         if (!file.createNewFile()) {
             throw new IOException("Failed to create file: " + file.getAbsolutePath());
         }
-        
+
         // Set proper permissions
         file.setReadable(true, false);
         file.setWritable(true, false);
-        
+
         BufferedWriter bufferedWriter = null;
         try {
             bufferedWriter = new BufferedWriter(new FileWriter(file));
@@ -229,30 +230,32 @@ public class GpuVoltEditor {
     }
 
     private static void generateAVolt(Activity activity, LinearLayout page, int voltn) throws Exception {
-        ((MainActivity) activity).onBackPressedListener = new MainActivity.onBackPressedListener() {
-            @Override
-            public void onBackPressed() {
-                generateVolts(activity, page);
-            }
-        };
+        // Back navigation handled by OnBackPressedDispatcher in MainActivity
+        // No custom callback needed - system back works correctly
 
         ListView listView = new ListView(activity);
         ArrayList<ParamAdapter.item> items = new ArrayList<>();
 
-        items.add(new ParamAdapter.item() {{
-            title = activity.getResources().getString(R.string.back);
-            subtitle = "";
-        }});
+        items.add(new ParamAdapter.item() {
+            {
+                title = activity.getResources().getString(R.string.back);
+                subtitle = "";
+            }
+        });
 
-        items.add(new ParamAdapter.item() {{
-            title = activity.getResources().getString(R.string.freq);
-            subtitle = opps.get(voltn).frequency + "";
-        }});
+        items.add(new ParamAdapter.item() {
+            {
+                title = activity.getResources().getString(R.string.freq);
+                subtitle = opps.get(voltn).frequency + "";
+            }
+        });
 
-        items.add(new ParamAdapter.item() {{
-            title = activity.getResources().getString(R.string.volt);
-            subtitle = levelint2str(opps.get(voltn).volt);
-        }});
+        items.add(new ParamAdapter.item() {
+            {
+                title = activity.getResources().getString(R.string.volt);
+                subtitle = levelint2str(opps.get(voltn).volt);
+            }
+        });
 
         listView.setAdapter(new ParamAdapter(items, activity));
         listView.setOnItemClickListener((parent, view, position, idd) -> {
@@ -268,8 +271,7 @@ public class GpuVoltEditor {
                         .setView(editText)
                         .setPositiveButton(R.string.save, (dialog, which) -> {
                             try {
-                                opps.get(voltn).frequency =
-                                        Long.parseLong(editText.getText().toString());
+                                opps.get(voltn).frequency = Long.parseLong(editText.getText().toString());
                                 generateAVolt(activity, page, voltn);
                             } catch (Exception e) {
                                 DialogUtil.showError(activity, R.string.save_failed);
@@ -291,8 +293,7 @@ public class GpuVoltEditor {
                             .setView(spinner)
                             .setMessage(R.string.editvolt_msg)
                             .setPositiveButton(R.string.save, (dialog, which) -> {
-                                opps.get(voltn).volt =
-                                        ChipInfo.rpmh_levels.levels()[spinner.getSelectedItemPosition()];
+                                opps.get(voltn).volt = ChipInfo.rpmh_levels.levels()[spinner.getSelectedItemPosition()];
                                 try {
                                     generateAVolt(activity, page, voltn);
                                 } catch (Exception e) {
@@ -313,49 +314,55 @@ public class GpuVoltEditor {
     }
 
     private static void generateVolts(Activity activity, LinearLayout page) {
-        ((MainActivity) activity).onBackPressedListener = new MainActivity.onBackPressedListener() {
-            @Override
-            public void onBackPressed() {
-                ((MainActivity) activity).showMainView();
-            }
-        };
+        // Back navigation handled by OnBackPressedDispatcher in MainActivity
+        // No custom callback needed - system back works correctly
 
         ListView listView = new ListView(activity);
         ArrayList<ParamAdapter.item> items = new ArrayList<>();
 
-        items.add(new ParamAdapter.item() {{
-            title = activity.getResources().getString(R.string.new_item);
-            subtitle = activity.getResources().getString(R.string.new_desc_volt);
-        }});
+        items.add(new ParamAdapter.item() {
+            {
+                title = activity.getResources().getString(R.string.new_item);
+                subtitle = activity.getResources().getString(R.string.new_desc_volt);
+            }
+        });
 
         for (opp opp : opps) {
-            items.add(new ParamAdapter.item() {{
-                title = SettingsActivity.formatFrequency(opp.frequency, activity);
-                subtitle = "";
-            }});
+            items.add(new ParamAdapter.item() {
+                {
+                    title = SettingsActivity.formatFrequency(opp.frequency, activity);
+                    subtitle = "";
+                }
+            });
         }
 
-        items.add(new ParamAdapter.item() {{
-            title = activity.getResources().getString(R.string.new_item);
-            subtitle = activity.getResources().getString(R.string.new_desc_volt);
-        }});
+        items.add(new ParamAdapter.item() {
+            {
+                title = activity.getResources().getString(R.string.new_item);
+                subtitle = activity.getResources().getString(R.string.new_desc_volt);
+            }
+        });
 
         listView.setAdapter(new ParamAdapter(items, activity));
         listView.setOnItemClickListener((parent, view, position, id) -> {
             if (position == opps.size() + 1) {
-                opp new_opp = new opp() {{
-                    frequency = opps.get(opps.size() - 1).frequency;
-                    volt = opps.get(opps.size() - 1).volt;
-                }};
+                opp new_opp = new opp() {
+                    {
+                        frequency = opps.get(opps.size() - 1).frequency;
+                        volt = opps.get(opps.size() - 1).volt;
+                    }
+                };
                 opps.add(opps.size() - 1, new_opp);
                 generateVolts(activity, page);
                 return;
             }
             if (position == 0) {
-                opp new_opp = new opp() {{
-                    frequency = opps.get(0).frequency;
-                    volt = opps.get(0).volt;
-                }};
+                opp new_opp = new opp() {
+                    {
+                        frequency = opps.get(0).frequency;
+                        volt = opps.get(0).volt;
+                    }
+                };
                 opps.add(0, new_opp);
                 generateVolts(activity, page);
                 return;
@@ -376,7 +383,8 @@ public class GpuVoltEditor {
             int finalPosition = position;
             new com.google.android.material.dialog.MaterialAlertDialogBuilder(activity)
                     .setTitle(R.string.remove)
-                    .setMessage("Are you sure to remove the voltage level of " + SettingsActivity.formatFrequency(opps.get(position).frequency, activity) + "?")
+                    .setMessage("Are you sure to remove the voltage level of "
+                            + SettingsActivity.formatFrequency(opps.get(position).frequency, activity) + "?")
                     .setPositiveButton(R.string.yes, (dialog, which) -> {
                         opps.remove(finalPosition);
                         generateVolts(activity, page);

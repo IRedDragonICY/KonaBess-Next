@@ -13,6 +13,7 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -45,7 +46,7 @@ public class MainActivity extends AppCompatActivity {
 
     androidx.appcompat.app.AlertDialog waiting;
     boolean cross_device_debug = false;
-    public onBackPressedListener onBackPressedListener = null;
+    private OnBackPressedCallback gpuTableEditorBackCallback;
 
     private final Object preparationLock = new Object();
     private final ArrayList<DevicePreparationListener> preparationListeners = new ArrayList<>();
@@ -97,12 +98,13 @@ public class MainActivity extends AppCompatActivity {
         showMainView();
     }
 
-    @Override
-    public void onBackPressed() {
-        if (onBackPressedListener != null)
-            onBackPressedListener.onBackPressed();
-        else
-            super.onBackPressed();
+    /**
+     * Returns the callback used by GpuTableEditor to handle back navigation.
+     * This allows GpuTableEditor to enable/disable the callback based on navigation
+     * depth.
+     */
+    public OnBackPressedCallback getGpuTableEditorBackCallback() {
+        return gpuTableEditorBackCallback;
     }
 
     private static Thread permission_worker;
@@ -185,7 +187,19 @@ public class MainActivity extends AppCompatActivity {
     LinearLayout showdView;
 
     void showMainView() {
-        onBackPressedListener = null;
+        // Initialize OnBackPressedCallback for GpuTableEditor navigation
+        // Starts disabled; GpuTableEditor enables it when navigating into sub-levels
+        if (gpuTableEditorBackCallback == null) {
+            gpuTableEditorBackCallback = new OnBackPressedCallback(false) {
+                @Override
+                public void handleOnBackPressed() {
+                    GpuTableEditor.handleBackNavigation();
+                }
+            };
+            getOnBackPressedDispatcher().addCallback(this, gpuTableEditorBackCallback);
+        } else {
+            gpuTableEditorBackCallback.setEnabled(false);
+        }
         setContentView(R.layout.activity_main);
 
         toolbar = findViewById(R.id.toolbar);
@@ -219,7 +233,10 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onPageSelected(int position) {
                 super.onPageSelected(position);
-                onBackPressedListener = null;
+                // Disable GpuTableEditor callback when changing pages
+                if (gpuTableEditorBackCallback != null) {
+                    gpuTableEditorBackCallback.setEnabled(false);
+                }
                 if (isPageChangeFromUser) {
                     switch (position) {
                         case 0:
@@ -575,8 +592,7 @@ public class MainActivity extends AppCompatActivity {
         SettingsActivity.applyThemeFromSettings(this);
     }
 
-    public static abstract class onBackPressedListener {
-        public abstract void onBackPressed();
-    }
+    // Removed: deprecated onBackPressedListener interface
+    // Navigation is now handled via OnBackPressedDispatcher
 
 }

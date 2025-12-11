@@ -390,12 +390,8 @@ public class TableIO {
     }
 
     private static void generateView(Activity activity, LinearLayout page) {
-        ((MainActivity) activity).onBackPressedListener = new MainActivity.onBackPressedListener() {
-            @Override
-            public void onBackPressed() {
-                ((MainActivity) activity).showMainView();
-            }
-        };
+        // Back navigation handled by OnBackPressedDispatcher in MainActivity
+        // No custom callback needed - system back works correctly
 
         RecyclerView recyclerView = new RecyclerView(activity);
         recyclerView.setLayoutManager(new LinearLayoutManager(activity));
