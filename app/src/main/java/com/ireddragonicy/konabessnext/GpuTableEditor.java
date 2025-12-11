@@ -1898,28 +1898,7 @@ public class GpuTableEditor {
         updateHistoryButtonLabel();
         updateSaveButtonAppearance();
 
-        // Create main vertical layout
-        LinearLayout mainLayout = new LinearLayout(
-                activity);
-        mainLayout.setOrientation(LinearLayout.VERTICAL);
-        mainLayout.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.MATCH_PARENT));
-
-        float density = activity.getResources().getDisplayMetrics().density;
-
-        // Add chipset selector card if multiple chipsets are available
-        if (KonaBessCore.dtbs != null && KonaBessCore.dtbs.size() > 1) {
-            mainLayout.addView(createChipsetSelectorCard(activity, page));
-        }
-
-        RecyclerView recyclerView = new RecyclerView(activity);
-        recyclerView.setLayoutParams(new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.MATCH_PARENT));
-        recyclerView.setLayoutManager(new LinearLayoutManager(activity));
-        recyclerView.setClipToPadding(false);
-        recyclerView.setPadding(0, (int) (density * 8), 0, (int) (density * 16));
-
+        // Build the bin items list
         ArrayList<GpuBinAdapter.BinItem> items = new ArrayList<>();
         for (int i = 0; i < bins.size(); i++) {
             items.add(new GpuBinAdapter.BinItem(
@@ -1927,25 +1906,90 @@ public class GpuTableEditor {
                     ""));
         }
 
-        GpuBinAdapter adapter = new GpuBinAdapter(items);
-        adapter.setOnItemClickListener(new GpuBinAdapter.OnItemClickListener() {
-            @Override
-            public void onBinClick(int position) {
-                try {
-                    generateLevels(activity, position, page);
-                } catch (Exception e) {
-                    DialogUtil.showError(activity, R.string.error_occur);
+        float density = activity.getResources().getDisplayMetrics().density;
+
+        // Check if we can reuse existing view hierarchy
+        // The structure is: page > LinearLayout (mainLayout) > [ChipsetSelector,
+        // RecyclerView]
+        // or page > LinearLayout (mainLayout) > RecyclerView (when single chipset)
+        RecyclerView existingRecyclerView = findBinRecyclerView(page);
+
+        if (existingRecyclerView != null
+                && existingRecyclerView.getAdapter() instanceof GpuBinAdapter) {
+            // Hot path: Reuse existing views
+            GpuBinAdapter adapter = (GpuBinAdapter) existingRecyclerView.getAdapter();
+            adapter.updateData(items);
+        } else {
+            // Cold path: Create new view hierarchy
+            LinearLayout mainLayout = new LinearLayout(activity);
+            mainLayout.setOrientation(LinearLayout.VERTICAL);
+            mainLayout.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.MATCH_PARENT));
+
+            // Add chipset selector card if multiple chipsets are available
+            if (KonaBessCore.dtbs != null && KonaBessCore.dtbs.size() > 1) {
+                mainLayout.addView(createChipsetSelectorCard(activity, page));
+            }
+
+            RecyclerView recyclerView = new RecyclerView(activity);
+            recyclerView.setLayoutParams(new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.MATCH_PARENT));
+            recyclerView.setLayoutManager(new LinearLayoutManager(activity));
+            recyclerView.setClipToPadding(false);
+            recyclerView.setPadding(0, (int) (density * 8), 0, (int) (density * 16));
+
+            GpuBinAdapter adapter = new GpuBinAdapter(items);
+            adapter.setOnItemClickListener(new GpuBinAdapter.OnItemClickListener() {
+                @Override
+                public void onBinClick(int position) {
+                    try {
+                        generateLevels(activity, position, page);
+                    } catch (Exception e) {
+                        DialogUtil.showError(activity, R.string.error_occur);
+                    }
+                }
+            });
+
+            recyclerView.setAdapter(adapter);
+            mainLayout.addView(recyclerView);
+
+            page.removeAllViews();
+            page.addView(mainLayout, new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.MATCH_PARENT));
+        }
+    }
+
+    /**
+     * Helper method to find the RecyclerView containing bin items in the view
+     * hierarchy.
+     * Handles the case where the structure is: page > LinearLayout > RecyclerView
+     */
+    private static RecyclerView findBinRecyclerView(LinearLayout page) {
+        if (page.getChildCount() == 0) {
+            return null;
+        }
+
+        View firstChild = page.getChildAt(0);
+
+        // Check if first child is a LinearLayout (mainLayout wrapper)
+        if (firstChild instanceof LinearLayout) {
+            LinearLayout mainLayout = (LinearLayout) firstChild;
+            // Look for RecyclerView in the mainLayout
+            for (int i = 0; i < mainLayout.getChildCount(); i++) {
+                View child = mainLayout.getChildAt(i);
+                if (child instanceof RecyclerView) {
+                    RecyclerView rv = (RecyclerView) child;
+                    // Verify it's a GpuBinAdapter (not GpuFreqAdapter)
+                    if (rv.getAdapter() instanceof GpuBinAdapter) {
+                        return rv;
+                    }
                 }
             }
-        });
+        }
 
-        recyclerView.setAdapter(adapter);
-        mainLayout.addView(recyclerView);
-
-        page.removeAllViews();
-        page.addView(mainLayout, new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.MATCH_PARENT));
+        return null;
     }
 
     public static View generateToolBar(Activity activity, LinearLayout showedView) {

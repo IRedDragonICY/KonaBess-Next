@@ -7,9 +7,12 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.RecyclerView;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import com.ireddragonicy.konabessnext.R;
 
@@ -23,17 +26,77 @@ public class GpuBinAdapter extends RecyclerView.Adapter<GpuBinAdapter.ViewHolder
             this.title = title;
             this.subtitle = subtitle;
         }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o)
+                return true;
+            if (o == null || getClass() != o.getClass())
+                return false;
+            BinItem binItem = (BinItem) o;
+            return Objects.equals(title, binItem.title) &&
+                    Objects.equals(subtitle, binItem.subtitle);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(title, subtitle);
+        }
+    }
+
+    public static class BinDiffCallback extends DiffUtil.Callback {
+        private final List<BinItem> oldList;
+        private final List<BinItem> newList;
+
+        public BinDiffCallback(List<BinItem> oldList, List<BinItem> newList) {
+            this.oldList = oldList;
+            this.newList = newList;
+        }
+
+        @Override
+        public int getOldListSize() {
+            return oldList.size();
+        }
+
+        @Override
+        public int getNewListSize() {
+            return newList.size();
+        }
+
+        @Override
+        public boolean areItemsTheSame(int oldItemPosition, int newItemPosition) {
+            // Items are the same if they have the same title (bin ID)
+            return Objects.equals(oldList.get(oldItemPosition).title,
+                    newList.get(newItemPosition).title);
+        }
+
+        @Override
+        public boolean areContentsTheSame(int oldItemPosition, int newItemPosition) {
+            return oldList.get(oldItemPosition).equals(newList.get(newItemPosition));
+        }
+    }
+
+    public void updateData(List<BinItem> newItems) {
+        DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(new BinDiffCallback(this.items, newItems));
+        this.items.clear();
+        this.items.addAll(newItems);
+        diffResult.dispatchUpdatesTo(this);
     }
 
     public interface OnItemClickListener {
         void onBinClick(int position);
     }
 
-    private final List<BinItem> items;
+    private List<BinItem> items;
     private OnItemClickListener clickListener;
 
     public GpuBinAdapter(List<BinItem> items) {
-        this.items = items;
+        // Make items list mutable if it isn't already
+        if (items instanceof ArrayList) {
+            this.items = items;
+        } else {
+            this.items = new ArrayList<>(items);
+        }
     }
 
     public void setOnItemClickListener(OnItemClickListener clickListener) {
