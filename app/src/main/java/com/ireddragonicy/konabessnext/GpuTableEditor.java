@@ -1450,6 +1450,9 @@ public class GpuTableEditor {
                     }
                     return;
                 case CURVE_EDITOR:
+                    // Clear the back listener so fragment back stack handles navigation
+                    mainActivity.onBackPressedListener = null;
+
                     com.ireddragonicy.konabessnext.fragments.GpuCurveEditorFragment fragment = new com.ireddragonicy.konabessnext.fragments.GpuCurveEditorFragment();
                     android.os.Bundle args = new android.os.Bundle();
                     args.putInt("binId", id);

@@ -57,6 +57,8 @@ public class GpuCurveEditorFragment extends Fragment implements GpuTableEditor.O
     private ArrayList<Entry> activeEntries = new ArrayList<>();
     private ArrayList<GpuTableEditor.level> originalLevels;
     private ArrayList<String> xLabels = new ArrayList<>();
+    private java.util.HashMap<Integer, String> voltageLabelMap = new java.util.HashMap<>(); // Map voltage level ->
+                                                                                            // label
     private int binIndex = 0;
     private int globalOffset = 0;
     private Entry draggingEntry = null;
@@ -159,13 +161,14 @@ public class GpuCurveEditorFragment extends Fragment implements GpuTableEditor.O
         referenceEntries.clear();
         activeEntries.clear();
         xLabels.clear();
+        voltageLabelMap.clear();
 
-        // Populate entries (reversed for correct graph display)
+        // Populate entries - X = voltage level (for proportional spacing)
         int size = originalLevels.size();
         voltageLevels = new int[size];
         for (int i = size - 1; i >= 0; i--) {
             GpuTableEditor.level lvl = originalLevels.get(i);
-            int xIndex = size - 1 - i;
+            int entryIndex = size - 1 - i; // Index in our arrays
 
             // Get frequency
             long freq = 0;
@@ -192,19 +195,32 @@ public class GpuCurveEditorFragment extends Fragment implements GpuTableEditor.O
                     break;
                 }
             }
-            voltageLevels[xIndex] = voltLevel;
+            voltageLevels[entryIndex] = voltLevel;
 
-            referenceEntries.add(new Entry(xIndex, freqMhz));
-            activeEntries.add(new Entry(xIndex, freqMhz));
+            // Use voltage level as X coordinate for proportional spacing
+            referenceEntries.add(new Entry(voltLevel, freqMhz));
+            activeEntries.add(new Entry(voltLevel, freqMhz));
 
-            // Get voltage label
+            // Get voltage label - format: "LABEL_NAME (level)" or just level number
             String voltLabel = null;
             try {
-                voltLabel = GpuVoltEditor.levelint2str(voltLevel);
+                String fullLabel = GpuVoltEditor.levelint2str(voltLevel);
+                // Extract just the name part (e.g., "256 - NOM" -> "NOM")
+                if (fullLabel != null && fullLabel.contains(" - ")) {
+                    voltLabel = fullLabel.split(" - ")[1];
+                } else if (fullLabel != null) {
+                    voltLabel = fullLabel;
+                }
             } catch (Exception ignored) {
             }
-            xLabels.add(voltLabel != null ? voltLevel + " - " + voltLabel : String.valueOf(voltLevel));
+            String finalLabel = voltLabel != null ? voltLabel : String.valueOf(voltLevel);
+            xLabels.add(finalLabel);
+            voltageLabelMap.put(voltLevel, finalLabel);
         }
+
+        // Sort entries by X (voltage level) for proper line connection
+        java.util.Collections.sort(referenceEntries, (a, b) -> Float.compare(a.getX(), b.getX()));
+        java.util.Collections.sort(activeEntries, (a, b) -> Float.compare(a.getX(), b.getX()));
     }
 
     private void setupChart() {
@@ -218,27 +234,38 @@ public class GpuCurveEditorFragment extends Fragment implements GpuTableEditor.O
         int colorOutline = MaterialColors.getColor(requireContext(), com.google.android.material.R.attr.colorOutline,
                 Color.GRAY);
 
-        // Chart config
+        // Chart config - Timeline-like zoom experience
         chart.getDescription().setEnabled(false);
         chart.setTouchEnabled(true);
         chart.setDragEnabled(true);
         chart.setScaleEnabled(true);
-        chart.setPinchZoom(true);
+        chart.setScaleXEnabled(true); // Allow X-axis zoom independently
+        chart.setScaleYEnabled(true); // Allow Y-axis zoom independently
+        chart.setPinchZoom(false); // Independent X/Y zoom for timeline-like experience
+        chart.setDoubleTapToZoomEnabled(false); // Disable - conflicts with tap-to-edit
         chart.setDrawGridBackground(false);
         chart.getLegend().setEnabled(false);
-        chart.setExtraBottomOffset(8f);
+        chart.setExtraBottomOffset(16f); // More space for rotated labels
+        chart.setVisibleXRangeMinimum(3); // Minimum 3 points visible when zoomed
 
-        // X-Axis
+        // X-Axis - shows voltage level values with proportional spacing
         XAxis xAxis = chart.getXAxis();
         xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
         xAxis.setTextColor(colorOnSurface);
-        xAxis.setDrawGridLines(false);
+        xAxis.setDrawGridLines(true);
+        xAxis.setGridColor(colorOutline);
+        xAxis.setGridLineWidth(0.8f);
         xAxis.setGranularity(1f);
+        xAxis.setLabelRotationAngle(-45f);
         xAxis.setValueFormatter(new ValueFormatter() {
             @Override
             public String getFormattedValue(float value) {
-                int idx = (int) value;
-                return (idx >= 0 && idx < xLabels.size()) ? xLabels.get(idx) : "";
+                int voltLevel = (int) value;
+                // Show voltage label at exact voltage positions
+                if (voltageLabelMap.containsKey(voltLevel)) {
+                    return voltageLabelMap.get(voltLevel) + " (" + voltLevel + ")";
+                }
+                return String.valueOf(voltLevel);
             }
         });
 
@@ -375,22 +402,60 @@ public class GpuCurveEditorFragment extends Fragment implements GpuTableEditor.O
         });
 
         chart.setOnTouchListener((v, event) -> {
+            int pointerCount = event.getPointerCount();
+
+            // Request parent to not intercept touches so chart can pan/zoom
+            if (event.getActionMasked() == MotionEvent.ACTION_DOWN) {
+                v.getParent().requestDisallowInterceptTouchEvent(true);
+            }
+
+            // Let chart handle multi-touch (pinch zoom) natively
+            if (pointerCount > 1) {
+                if (draggingEntry != null) {
+                    // Cancel any ongoing drag when pinch starts
+                    draggingEntry = null;
+                    chart.highlightValue(null);
+                }
+                return false; // Let chart handle pinch
+            }
+
             Highlight h = chart.getHighlightByTouchPoint(event.getX(), event.getY());
 
-            switch (event.getAction()) {
+            switch (event.getActionMasked()) {
                 case MotionEvent.ACTION_DOWN:
                     touchDownX = event.getX();
                     touchDownY = event.getY();
                     if (h != null) {
-                        int idx = (int) h.getX();
-                        if (idx >= 0 && idx < activeEntries.size()) {
-                            draggingEntry = activeEntries.get(idx);
-                            chart.highlightValue(h);
-                            chart.getParent().requestDisallowInterceptTouchEvent(true);
-                            v.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK);
+                        float voltageX = h.getX();
+                        // Find entry by matching X value (voltage level)
+                        Entry matchedEntry = null;
+                        for (Entry e : activeEntries) {
+                            if (Math.abs(e.getX() - voltageX) < 0.5f) {
+                                matchedEntry = e;
+                                break;
+                            }
+                        }
+
+                        if (matchedEntry != null) {
+                            // Calculate pixel position of the data point
+                            com.github.mikephil.charting.utils.MPPointD pointPixel = chart
+                                    .getTransformer(YAxis.AxisDependency.LEFT)
+                                    .getPixelForValues(matchedEntry.getX(), matchedEntry.getY());
+
+                            // Check if touch is within 50 pixels of the point
+                            float dx = Math.abs(event.getX() - (float) pointPixel.x);
+                            float dy = Math.abs(event.getY() - (float) pointPixel.y);
+                            float distance = (float) Math.sqrt(dx * dx + dy * dy);
+
+                            if (distance < 50f) { // Only start drag if close to point
+                                draggingEntry = matchedEntry;
+                                chart.highlightValue(h);
+                                v.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK);
+                                return true; // Consume to start drag
+                            }
                         }
                     }
-                    break;
+                    return false; // No point hit or too far, let chart handle pan
 
                 case MotionEvent.ACTION_MOVE:
                     if (draggingEntry != null) {
@@ -399,8 +464,9 @@ public class GpuCurveEditorFragment extends Fragment implements GpuTableEditor.O
                         yVal = Math.max(50, Math.min(3000, yVal)); // Clamp
                         draggingEntry.setY(yVal);
                         refreshChart();
+                        return true; // Consume drag
                     }
-                    break;
+                    return false; // Not dragging, let chart handle
 
                 case MotionEvent.ACTION_UP:
                     if (draggingEntry != null) {
@@ -409,11 +475,19 @@ public class GpuCurveEditorFragment extends Fragment implements GpuTableEditor.O
                         float dy = Math.abs(event.getY() - touchDownY);
                         boolean wasTap = dx < TAP_THRESHOLD && dy < TAP_THRESHOLD;
 
-                        if (wasTap && h != null) {
+                        if (wasTap) {
                             // Tap detected - show voltage edit dialog
-                            int idx = (int) h.getX();
-                            if (idx >= 0 && idx < activeEntries.size()) {
-                                showVoltageEditDialog(idx);
+                            // Find index in voltageLevels array by matching draggingEntry's X value
+                            int voltLevel = (int) draggingEntry.getX();
+                            int entryIdx = -1;
+                            for (int i = 0; i < voltageLevels.length; i++) {
+                                if (voltageLevels[i] == voltLevel) {
+                                    entryIdx = i;
+                                    break;
+                                }
+                            }
+                            if (entryIdx >= 0) {
+                                showVoltageEditDialog(entryIdx);
                             }
                         } else {
                             // Drag completed - save changes
@@ -422,19 +496,18 @@ public class GpuCurveEditorFragment extends Fragment implements GpuTableEditor.O
 
                         draggingEntry = null;
                         chart.highlightValue(null);
-                        chart.getParent().requestDisallowInterceptTouchEvent(false);
+                        return true;
                     }
-                    break;
+                    return false;
 
                 case MotionEvent.ACTION_CANCEL:
                     if (draggingEntry != null) {
                         draggingEntry = null;
                         chart.highlightValue(null);
-                        chart.getParent().requestDisallowInterceptTouchEvent(false);
                     }
-                    break;
+                    return false;
             }
-            return true;
+            return false;
         });
     }
 
