@@ -30,6 +30,11 @@
             android:name=".ExportHistoryActivity"
             android:exported="false"
             android:screenOrientation="portrait" />
+        <activity
+            android:name=".RawDtsEditorActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:windowSoftInputMode="adjustResize" />
         
         <!-- FileProvider for sharing files -->
         <provider

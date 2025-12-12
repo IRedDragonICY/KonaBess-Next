@@ -241,4 +241,21 @@
     <string name="export_raw_dts">Export Raw DTS</string>
     <string name="export_raw_dts_msg">Export the currently edited Device Tree Source file to storage</string>
     <string name="gpu_curve_editor_title">Curve Editor</string>
+    
+    <!-- Raw DTS Editor -->
+    <string name="raw_dts_editor">Raw DTS Editor</string>
+    <string name="raw_dts_editor_desc">Advanced text editor for direct DTS file editing</string>
+    <string name="raw_dts_editor_warning_title">⚠️ Warning: Advanced Feature</string>
+    <string name="raw_dts_editor_warning_msg">Editing raw DTS can cause boot issues if done incorrectly. Only proceed if you understand Device Tree structure.\n\nAlways backup your boot image first!</string>
+    <string name="line_count">Lines: %d</string>
+    <string name="search">Search</string>
+    <string name="search_hint">Search text…</string>
+    <string name="no_results_found">No results found</string>
+    <string name="unsaved_changes_title">Unsaved Changes</string>
+    <string name="unsaved_changes_msg">You have unsaved changes. What would you like to do?</string>
+    <string name="discard">Discard</string>
+    <string name="loading_file">Loading file…</string>
+    <string name="saving_file">Saving file…</string>
+    <string name="copy_all">Copy All</string>
+    <string name="text_copied_to_clipboard">Text copied to clipboard</string>
 </resources>

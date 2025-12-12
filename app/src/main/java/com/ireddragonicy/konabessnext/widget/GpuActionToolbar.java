@@ -2,21 +2,24 @@ package com.ireddragonicy.konabessnext.widget;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.util.AttributeSet;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.ireddragonicy.konabessnext.ChipInfo;
 import com.ireddragonicy.konabessnext.GpuTableEditor;
 import com.ireddragonicy.konabessnext.GpuVoltEditor;
 import com.ireddragonicy.konabessnext.MainActivity;
 import com.ireddragonicy.konabessnext.R;
+import com.ireddragonicy.konabessnext.RawDtsEditorActivity;
 
 public class GpuActionToolbar extends LinearLayout implements GpuTableEditor.OnHistoryStateChangedListener {
 
-    private MaterialButton btnSave, btnUndo, btnRedo, btnHistory, btnVolt, btnRepack;
+    private MaterialButton btnSave, btnUndo, btnRedo, btnHistory, btnVolt, btnDtsEditor, btnRepack;
     private View parentViewForVolt;
     private boolean showVolt = false;
     private boolean showRepack = false;
@@ -113,16 +116,58 @@ public class GpuActionToolbar extends LinearLayout implements GpuTableEditor.OnH
         }
 
         if (showRepack && activity instanceof MainActivity) {
+            // DTS Editor button (icon-only, before Flash)
+            btnDtsEditor = new MaterialButton(activity);
+            btnDtsEditor.setIconResource(R.drawable.ic_code);
+            btnDtsEditor.setIconGravity(MaterialButton.ICON_GRAVITY_TEXT_START);
+
+            float density = activity.getResources().getDisplayMetrics().density;
+            int iconSize = (int) (density * 20);
+            btnDtsEditor.setIconSize(iconSize);
+            btnDtsEditor.setIconPadding(0);
+            btnDtsEditor.setPadding((int) (density * 12), (int) (density * 10), (int) (density * 12),
+                    (int) (density * 10));
+
+            // Material You colors
+            int backgroundColor = com.google.android.material.color.MaterialColors.getColor(btnDtsEditor,
+                    com.google.android.material.R.attr.colorSecondaryContainer);
+            int foregroundColor = com.google.android.material.color.MaterialColors.getColor(btnDtsEditor,
+                    com.google.android.material.R.attr.colorOnSecondaryContainer);
+            int rippleColor = com.google.android.material.color.MaterialColors.getColor(btnDtsEditor,
+                    com.google.android.material.R.attr.colorSecondary);
+
+            btnDtsEditor.setBackgroundTintList(android.content.res.ColorStateList.valueOf(backgroundColor));
+            btnDtsEditor.setIconTint(android.content.res.ColorStateList.valueOf(foregroundColor));
+            btnDtsEditor.setRippleColor(android.content.res.ColorStateList.valueOf(rippleColor));
+            btnDtsEditor.setStrokeWidth(0);
+            btnDtsEditor.setCornerRadius((int) (density * 20));
+
+            btnDtsEditor.setOnClickListener(v -> {
+                new MaterialAlertDialogBuilder(activity)
+                        .setTitle(R.string.raw_dts_editor_warning_title)
+                        .setMessage(R.string.raw_dts_editor_warning_msg)
+                        .setPositiveButton(R.string.confirm, (dialog, which) -> {
+                            Intent intent = new Intent(activity, RawDtsEditorActivity.class);
+                            activity.startActivity(intent);
+                        })
+                        .setNegativeButton(R.string.cancel, null)
+                        .show();
+            });
+
+            LinearLayout.LayoutParams dtsParams = new LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT,
+                    LayoutParams.WRAP_CONTENT);
+            dtsParams.setMargins(0, 0, chipSpacing, 0);
+            btnDtsEditor.setLayoutParams(dtsParams);
+            secondRow.addView(btnDtsEditor);
+            hasSecondRow = true;
+
+            // Repack/Flash button
             btnRepack = GpuTableEditor.createCompactChip(activity, R.string.repack_flash, R.drawable.ic_flash);
             btnRepack.setOnClickListener(v -> ((MainActivity) activity).new repackLogic().start());
 
             LinearLayout.LayoutParams repackParams = new LinearLayout.LayoutParams(0, LayoutParams.WRAP_CONTENT, 1.0f);
-            if (!hasSecondRow) {
-                repackParams.setMargins(0, 0, chipSpacing, 0);
-            }
             btnRepack.setLayoutParams(repackParams);
             secondRow.addView(btnRepack);
-            hasSecondRow = true;
         }
 
         if (hasSecondRow) {
