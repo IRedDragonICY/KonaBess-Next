@@ -995,7 +995,7 @@ public class VirtualizedCodeEditor extends View {
         }
 
         // Complex delete always snapshots
-        snapshot(ActionType.COMPLEX);
+        snapshot();
 
         document.delete(startLine, startCol, endLine, endCol);
 
