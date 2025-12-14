@@ -1640,3 +1640,6 @@ public class VirtualizedCodeEditor extends View {
         hideActionMode();
     }
 }
+
+
+

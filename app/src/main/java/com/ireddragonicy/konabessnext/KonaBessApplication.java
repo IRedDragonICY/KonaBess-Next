@@ -4,6 +4,7 @@ import android.app.Application;
 import android.content.Context;
 
 import com.ireddragonicy.konabessnext.utils.LocaleUtil;
+import com.ireddragonicy.konabessnext.ui.SettingsActivity;
 
 public class KonaBessApplication extends Application {
     @Override

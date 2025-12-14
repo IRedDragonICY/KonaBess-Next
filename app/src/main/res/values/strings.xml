@@ -42,6 +42,7 @@
     <string name="save_success">Saved</string>
     <string name="save_failed">Failed when saving</string>
     <string name="error_occur">An error occurred</string>
+    <string name="invalid_value">Invalid value</string>
     <string name="edit">Edit</string>
     <string name="unable_add_more">Unable to add more frequencies</string>
     <string name="new_item">New</string>

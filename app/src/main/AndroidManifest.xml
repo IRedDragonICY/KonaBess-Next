@@ -13,7 +13,7 @@
         android:requestLegacyExternalStorage="true"
         android:theme="@style/Theme.KonaBess">
         <activity
-            android:name=".MainActivity"
+            android:name=".ui.MainActivity"
             android:exported="true"
             android:screenOrientation="portrait">
             <intent-filter>
@@ -23,15 +23,15 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".SettingsActivity"
+            android:name=".ui.SettingsActivity"
             android:exported="false"
             android:screenOrientation="portrait" />
         <activity
-            android:name=".ExportHistoryActivity"
+            android:name=".ui.ExportHistoryActivity"
             android:exported="false"
             android:screenOrientation="portrait" />
         <activity
-            android:name=".RawDtsEditorActivity"
+            android:name=".ui.RawDtsEditorActivity"
             android:exported="false"
             android:screenOrientation="portrait"
             android:windowSoftInputMode="adjustResize" />

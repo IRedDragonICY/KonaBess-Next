@@ -4,7 +4,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.ireddragonicy.konabessnext.adapters.GpuFreqAdapter;
+import com.ireddragonicy.konabessnext.ui.adapters.GpuFreqAdapter;
 
 public class ItemTouchHelperCallback extends ItemTouchHelper.Callback {
 
@@ -79,3 +79,6 @@ public class ItemTouchHelperCallback extends ItemTouchHelper.Callback {
         viewHolder.itemView.setScaleY(1.0f);
     }
 }
+
+
+

@@ -13,7 +13,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-import com.ireddragonicy.konabessnext.models.ExportHistoryItem;
+import com.ireddragonicy.konabessnext.model.ExportHistoryItem;
 
 public class ExportHistoryManager {
     private static final String PREFS_NAME = "ExportHistory";
@@ -120,3 +120,6 @@ public class ExportHistoryManager {
         return getHistory().size();
     }
 }
+
+
+

@@ -9,7 +9,7 @@ import android.os.LocaleList;
 
 import java.util.Locale;
 
-import com.ireddragonicy.konabessnext.SettingsActivity;
+import com.ireddragonicy.konabessnext.ui.SettingsActivity;
 
 public class LocaleUtil {
     private static final String PREFS_NAME = "KonaBessSettings";
@@ -44,3 +44,6 @@ public class LocaleUtil {
         return context.createConfigurationContext(configuration);
     }
 }
+
+
+

@@ -22,3 +22,6 @@ public class CodeEditor extends VirtualizedCodeEditor {
         super(context, attrs, defStyleAttr);
     }
 }
+
+
+
